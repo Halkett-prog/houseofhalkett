@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -9,10 +9,20 @@ export default function HalkettNavbar() {
   const pathname = usePathname();
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Add scroll detection
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleAdminLogin = () => {
-    // In production, this should verify against Supabase
-    if (adminPassword === 'halkett2025') { // Change this!
+    if (adminPassword === 'halkett2025') {
       window.location.href = '/admin/orders';
     } else {
       alert('Invalid password');
@@ -34,199 +44,316 @@ export default function HalkettNavbar() {
       <header style={{
         background: '#232320',
         color: '#EFEEE1',
-        position: 'sticky',
+        position: 'fixed',
         top: 0,
+        left: 0,
+        right: 0,
         zIndex: 100,
-        boxShadow: '0 2px 10px rgba(35,35,32,0.2)'
+        boxShadow: '0 2px 10px rgba(35,35,32,0.2)',
+        transition: 'all 0.3s ease'
       }}>
         <div style={{
           maxWidth: '1400px',
           margin: '0 auto',
-          padding: '30px 20px'
+          padding: isScrolled ? '10px 20px' : '30px 20px',
+          transition: 'all 0.3s ease'
         }}>
-          {/* Logo and Title */}
-          <div style={{
-            textAlign: 'center',
-            marginBottom: '20px'
-          }}>
-            {/* Logo Image */}
+          {/* Compact header when scrolled */}
+          {isScrolled ? (
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: '20px',
-              marginBottom: '15px'
+              justifyContent: 'space-between'
             }}>
-              <Image 
-  src="/images/halkett-logo.png" 
-  alt="HALKETT Logo" 
-  width={120} 
-  height={100}
-  style={{
-    objectFit: 'contain',
-    filter: 'brightness(0) invert(1) sepia(1) saturate(0.5) hue-rotate(30deg) brightness(0.95)',
-    width: 'clamp(50px, 8vw, 120px)',  // Responsive width
-    height: 'auto',  // Maintains aspect ratio
-    maxWidth: '100%'
-  }}
-/>
-              <h1 style={{
-                fontFamily: "'Roboto Mono', monospace",
-                fontSize: 'clamp(28px, 5vw, 36px)',
-                letterSpacing: '15px',
-                margin: 0,
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                color: '#EFEEE1'
+              {/* Logo and title inline */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '15px'
               }}>
-                HOUSE OF HALKETT
-              </h1>
+                <Image 
+                  src="/images/halkett-logo.png" 
+                  alt="HALKETT Logo" 
+                  width={120} 
+                  height={100}
+                  style={{
+                    objectFit: 'contain',
+                    filter: 'brightness(0) invert(1) sepia(1) saturate(0.5) hue-rotate(30deg) brightness(0.95)',
+                    width: '40px',
+                    height: 'auto'
+                  }}
+                />
+                <h1 style={{
+                  fontFamily: "'Roboto Mono', monospace",
+                  fontSize: '18px',
+                  letterSpacing: '4px',
+                  margin: 0,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  color: '#EFEEE1'
+                }}>
+                  HOUSE OF HALKETT
+                </h1>
+              </div>
+
+              {/* Navigation inline */}
+              <nav style={{
+                display: 'flex',
+                gap: '30px'
+              }}>
+                <Link 
+                  href="/"
+                  style={{
+                    color: isActive('/') ? '#B19359' : '#EFEEE1',
+                    textDecoration: 'none',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    letterSpacing: '1.5px',
+                    textTransform: 'uppercase',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.color = '#B19359'}
+                  onMouseLeave={(e) => !isActive('/') && (e.target.style.color = '#EFEEE1')}
+                >
+                  HOME
+                </Link>
+
+                <Link 
+                  href="/calculator"
+                  style={{
+                    color: isActive('/calculator') ? '#B19359' : '#EFEEE1',
+                    textDecoration: 'none',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    letterSpacing: '1.5px',
+                    textTransform: 'uppercase',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.color = '#B19359'}
+                  onMouseLeave={(e) => !isActive('/calculator') && (e.target.style.color = '#EFEEE1')}
+                >
+                  CALCULATOR
+                </Link>
+
+                <Link 
+                  href="/materials"
+                  style={{
+                    color: isActive('/materials') ? '#B19359' : '#EFEEE1',
+                    textDecoration: 'none',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    letterSpacing: '1.5px',
+                    textTransform: 'uppercase',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.color = '#B19359'}
+                  onMouseLeave={(e) => !isActive('/materials') && (e.target.style.color = '#EFEEE1')}
+                >
+                  MATERIALS
+                </Link>
+
+                <Link 
+                  href="/cart"
+                  style={{
+                    color: isActive('/cart') ? '#B19359' : '#EFEEE1',
+                    textDecoration: 'none',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    letterSpacing: '1.5px',
+                    textTransform: 'uppercase',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.color = '#B19359'}
+                  onMouseLeave={(e) => !isActive('/cart') && (e.target.style.color = '#EFEEE1')}
+                >
+                  CART
+                </Link>
+              </nav>
             </div>
-            <div style={{
-              fontSize: 'clamp(11px, 2.5vw, 13px)',
-              color: '#A1A2A0',
-              letterSpacing: '3px',
-              fontWeight: 400,
-              textTransform: 'uppercase'
-            }}>
-              THE ART OF WALLS
-            </div>
-          </div>
-
-          {/* Separator Line */}
-          <div style={{
-            height: '1px',
-            background: '#444',
-            margin: '20px auto',
-            maxWidth: '600px'
-          }} />
-
-          {/* Navigation - NO ORDERS LINK */}
-          <nav style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '40px',
-            flexWrap: 'wrap'
-          }}>
-            <Link 
-              href="/"
-              style={{
-                color: isActive('/') ? '#B19359' : '#EFEEE1',
-                textDecoration: 'none',
-                fontSize: '12px',
-                fontWeight: 600,
-                letterSpacing: '2.2px',
-                textTransform: 'uppercase',
-                transition: 'all 0.2s ease',
-                position: 'relative',
-                padding: '5px 0'
-              }}
-              onMouseEnter={(e) => e.target.style.color = '#B19359'}
-              onMouseLeave={(e) => !isActive('/') && (e.target.style.color = '#EFEEE1')}
-            >
-              HOME
-              {isActive('/') && (
+          ) : (
+            // Full header when not scrolled
+            <>
+              <div style={{
+                textAlign: 'center',
+                marginBottom: '20px'
+              }}>
                 <div style={{
-                  position: 'absolute',
-                  bottom: '-5px',
-                  left: 0,
-                  right: 0,
-                  height: '2px',
-                  background: '#B19359'
-                }} />
-              )}
-            </Link>
-
-            <Link 
-              href="/calculator"
-              style={{
-                color: isActive('/calculator') ? '#B19359' : '#EFEEE1',
-                textDecoration: 'none',
-                fontSize: '12px',
-                fontWeight: 600,
-                letterSpacing: '2.2px',
-                textTransform: 'uppercase',
-                transition: 'all 0.2s ease',
-                position: 'relative',
-                padding: '5px 0'
-              }}
-              onMouseEnter={(e) => e.target.style.color = '#B19359'}
-              onMouseLeave={(e) => !isActive('/calculator') && (e.target.style.color = '#EFEEE1')}
-            >
-              CALCULATOR
-              {isActive('/calculator') && (
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '20px',
+                  marginBottom: '15px'
+                }}>
+                  <Image 
+                    src="/images/halkett-logo.png" 
+                    alt="HALKETT Logo" 
+                    width={120} 
+                    height={100}
+                    style={{
+                      objectFit: 'contain',
+                      filter: 'brightness(0) invert(1) sepia(1) saturate(0.5) hue-rotate(30deg) brightness(0.95)',
+                      width: 'clamp(50px, 8vw, 120px)',
+                      height: 'auto',
+                      maxWidth: '100%'
+                    }}
+                  />
+                  <h1 style={{
+                    fontFamily: "'Roboto Mono', monospace",
+                    fontSize: 'clamp(28px, 5vw, 36px)',
+                    letterSpacing: '15px',
+                    margin: 0,
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    color: '#EFEEE1'
+                  }}>
+                    HOUSE OF HALKETT
+                  </h1>
+                </div>
                 <div style={{
-                  position: 'absolute',
-                  bottom: '-5px',
-                  left: 0,
-                  right: 0,
-                  height: '2px',
-                  background: '#B19359'
-                }} />
-              )}
-            </Link>
+                  fontSize: 'clamp(11px, 2.5vw, 13px)',
+                  color: '#A1A2A0',
+                  letterSpacing: '3px',
+                  fontWeight: 400,
+                  textTransform: 'uppercase'
+                }}>
+                  THE ART OF WALLS
+                </div>
+              </div>
 
-            <Link 
-              href="/materials"
-              style={{
-                color: isActive('/materials') ? '#B19359' : '#EFEEE1',
-                textDecoration: 'none',
-                fontSize: '12px',
-                fontWeight: 600,
-                letterSpacing: '2.2px',
-                textTransform: 'uppercase',
-                transition: 'all 0.2s ease',
-                position: 'relative',
-                padding: '5px 0'
-              }}
-              onMouseEnter={(e) => e.target.style.color = '#B19359'}
-              onMouseLeave={(e) => !isActive('/materials') && (e.target.style.color = '#EFEEE1')}
-            >
-              MATERIALS
-              {isActive('/materials') && (
-                <div style={{
-                  position: 'absolute',
-                  bottom: '-5px',
-                  left: 0,
-                  right: 0,
-                  height: '2px',
-                  background: '#B19359'
-                }} />
-              )}
-            </Link>
+              <div style={{
+                height: '1px',
+                background: '#444',
+                margin: '20px auto',
+                maxWidth: '600px'
+              }} />
 
-            <Link 
-              href="/cart"
-              style={{
-                color: isActive('/cart') ? '#B19359' : '#EFEEE1',
-                textDecoration: 'none',
-                fontSize: '12px',
-                fontWeight: 600,
-                letterSpacing: '2.2px',
-                textTransform: 'uppercase',
-                transition: 'all 0.2s ease',
-                position: 'relative',
-                padding: '5px 0'
-              }}
-              onMouseEnter={(e) => e.target.style.color = '#B19359'}
-              onMouseLeave={(e) => !isActive('/cart') && (e.target.style.color = '#EFEEE1')}
-            >
-              CART
-              {isActive('/cart') && (
-                <div style={{
-                  position: 'absolute',
-                  bottom: '-5px',
-                  left: 0,
-                  right: 0,
-                  height: '2px',
-                  background: '#B19359'
-                }} />
-              )}
-            </Link>
-          </nav>
+              <nav style={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '40px',
+                flexWrap: 'wrap'
+              }}>
+                <Link 
+                  href="/"
+                  style={{
+                    color: isActive('/') ? '#B19359' : '#EFEEE1',
+                    textDecoration: 'none',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    letterSpacing: '2.2px',
+                    textTransform: 'uppercase',
+                    transition: 'all 0.2s ease',
+                    position: 'relative',
+                    padding: '5px 0'
+                  }}
+                  onMouseEnter={(e) => e.target.style.color = '#B19359'}
+                  onMouseLeave={(e) => !isActive('/') && (e.target.style.color = '#EFEEE1')}
+                >
+                  HOME
+                  {isActive('/') && (
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '-5px',
+                      left: 0,
+                      right: 0,
+                      height: '2px',
+                      background: '#B19359'
+                    }} />
+                  )}
+                </Link>
+
+                <Link 
+                  href="/calculator"
+                  style={{
+                    color: isActive('/calculator') ? '#B19359' : '#EFEEE1',
+                    textDecoration: 'none',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    letterSpacing: '2.2px',
+                    textTransform: 'uppercase',
+                    transition: 'all 0.2s ease',
+                    position: 'relative',
+                    padding: '5px 0'
+                  }}
+                  onMouseEnter={(e) => e.target.style.color = '#B19359'}
+                  onMouseLeave={(e) => !isActive('/calculator') && (e.target.style.color = '#EFEEE1')}
+                >
+                  CALCULATOR
+                  {isActive('/calculator') && (
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '-5px',
+                      left: 0,
+                      right: 0,
+                      height: '2px',
+                      background: '#B19359'
+                    }} />
+                  )}
+                </Link>
+
+                <Link 
+                  href="/materials"
+                  style={{
+                    color: isActive('/materials') ? '#B19359' : '#EFEEE1',
+                    textDecoration: 'none',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    letterSpacing: '2.2px',
+                    textTransform: 'uppercase',
+                    transition: 'all 0.2s ease',
+                    position: 'relative',
+                    padding: '5px 0'
+                  }}
+                  onMouseEnter={(e) => e.target.style.color = '#B19359'}
+                  onMouseLeave={(e) => !isActive('/materials') && (e.target.style.color = '#EFEEE1')}
+                >
+                  MATERIALS
+                  {isActive('/materials') && (
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '-5px',
+                      left: 0,
+                      right: 0,
+                      height: '2px',
+                      background: '#B19359'
+                    }} />
+                  )}
+                </Link>
+
+                <Link 
+                  href="/cart"
+                  style={{
+                    color: isActive('/cart') ? '#B19359' : '#EFEEE1',
+                    textDecoration: 'none',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    letterSpacing: '2.2px',
+                    textTransform: 'uppercase',
+                    transition: 'all 0.2s ease',
+                    position: 'relative',
+                    padding: '5px 0'
+                  }}
+                  onMouseEnter={(e) => e.target.style.color = '#B19359'}
+                  onMouseLeave={(e) => !isActive('/cart') && (e.target.style.color = '#EFEEE1')}
+                >
+                  CART
+                  {isActive('/cart') && (
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '-5px',
+                      left: 0,
+                      right: 0,
+                      height: '2px',
+                      background: '#B19359'
+                    }} />
+                  )}
+                </Link>
+              </nav>
+            </>
+          )}
         </div>
 
-        {/* Hidden Admin Access - Double click on top-left corner */}
+        {/* Hidden Admin Access */}
         <div 
           style={{
             position: 'absolute',
@@ -241,6 +368,9 @@ export default function HalkettNavbar() {
           title="Admin Access"
         />
       </header>
+
+      {/* Add padding to body to account for fixed header */}
+      <div style={{ paddingTop: isScrolled ? '60px' : '180px', transition: 'padding 0.3s ease' }} />
 
       {/* Admin Login Modal */}
       {showAdminLogin && (
@@ -281,7 +411,7 @@ export default function HalkettNavbar() {
                   fontSize: '11px',
                   color: '#232320',
                   marginBottom: '8px',
-                  fontWeight: 700,
+                  fontWeight: '700',
                   textTransform: 'uppercase',
                   letterSpacing: '2.2px',
                   fontFamily: "'Roboto Mono', monospace"
@@ -326,7 +456,7 @@ export default function HalkettNavbar() {
                     fontFamily: "'Roboto Mono', monospace",
                     letterSpacing: '2.2px',
                     cursor: 'pointer',
-                    fontWeight: 700,
+                    fontWeight: '700',
                     textTransform: 'uppercase',
                     borderRadius: 0
                   }}
@@ -345,7 +475,7 @@ export default function HalkettNavbar() {
                     fontFamily: "'Roboto Mono', monospace",
                     letterSpacing: '2.2px',
                     cursor: 'pointer',
-                    fontWeight: 700,
+                    fontWeight: '700',
                     textTransform: 'uppercase',
                     borderRadius: 0
                   }}
