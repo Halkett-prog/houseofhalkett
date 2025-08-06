@@ -1,26 +1,415 @@
-@import "tailwindcss";
+/* HALKETT House Unified Global Styles - Matching Calculator Aesthetic */
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* HALKETT Brand Colors - From Calculator */
+  --halkett-dark: #232320;
+  --halkett-cream: #EFEEE1;
+  --halkett-gold: #B19359;
+  --halkett-blue: #34499E;
+  --halkett-border: #D1C6B4;
+  --halkett-secondary: #A1A2A0;
+  --halkett-light-bg: #F8F7F5;
+  --halkett-white: #FFFFFF;
+  
+  /* Status Colors */
+  --status-success: #4CAF50;
+  --status-warning: #FF9800;
+  --status-error: #F44336;
+  --status-info: #2196F3;
+  
+  /* Spacing */
+  --spacing-xs: 8px;
+  --spacing-sm: 16px;
+  --spacing-md: 24px;
+  --spacing-lg: 32px;
+  --spacing-xl: 48px;
+  
+  /* Typography */
+  --font-primary: 'Roboto Mono', monospace;
+  --letter-spacing-wide: 2.2px;
+  --letter-spacing-normal: 0.5px;
+  --letter-spacing-tight: 0.15px;
+  --letter-spacing-extra-wide: 15px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-primary);
+  background-color: var(--halkett-cream);
+  color: var(--halkett-dark);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography - Matching Calculator */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--halkett-dark);
+  margin-bottom: var(--spacing-md);
+}
+
+h1 {
+  font-size: clamp(28px, 5vw, 36px);
+  letter-spacing: var(--letter-spacing-extra-wide);
+}
+
+h2 {
+  font-size: clamp(24px, 4vw, 28px);
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+h3 {
+  font-size: clamp(18px, 3.5vw, 20px);
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+h4 {
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+
+p {
+  font-size: 14px;
+  letter-spacing: var(--letter-spacing-tight);
+  margin-bottom: var(--spacing-sm);
+}
+
+a {
+  color: var(--halkett-blue);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+a:hover {
+  color: var(--halkett-dark);
+}
+
+/* Buttons - HALKETT Calculator Style */
+button, .btn {
+  background: var(--halkett-blue);
+  color: var(--halkett-white);
+  border: none;
+  padding: 16px 32px;
+  font-size: 12px;
+  font-family: var(--font-primary);
+  letter-spacing: var(--letter-spacing-wide);
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  border-radius: 0;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+}
+
+button:hover, .btn:hover {
+  background: var(--halkett-dark);
+  transform: translateY(-1px);
+}
+
+button:active, .btn:active {
+  transform: translateY(0);
+}
+
+button:disabled, .btn:disabled {
+  background: var(--halkett-border);
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.7;
+}
+
+/* Secondary Button */
+button.secondary, .btn-secondary {
+  background: var(--halkett-white);
+  color: var(--halkett-blue);
+  border: 2px solid var(--halkett-blue);
+}
+
+button.secondary:hover, .btn-secondary:hover {
+  background: var(--halkett-blue);
+  color: var(--halkett-white);
+}
+
+/* Primary Button Override */
+.btn-primary {
+  background: var(--halkett-blue);
+  color: var(--halkett-white);
+  border: none;
+  padding: 16px 32px;
+  font-size: 12px;
+  font-family: var(--font-primary);
+  letter-spacing: var(--letter-spacing-wide);
+  cursor: pointer;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-radius: 0;
+}
+
+.btn-primary:hover {
+  background: var(--halkett-dark);
+}
+
+/* Gold/Premium Button */
+button.premium, .btn-premium {
+  background: var(--halkett-gold);
+  color: var(--halkett-white);
+}
+
+button.premium:hover, .btn-premium:hover {
+  background: var(--halkett-dark);
+}
+
+/* Forms - HALKETT Style */
+input, select, textarea {
+  padding: 14px 16px;
+  border: 2px solid var(--halkett-border);
+  background: var(--halkett-white);
+  font-size: 16px;
+  font-family: var(--font-primary);
+  width: 100%;
+  transition: all 0.2s ease;
+  border-radius: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--halkett-blue);
+}
+
+select {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2334499E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 20px;
+  padding-right: 40px;
+}
+
+label {
+  display: block;
+  font-size: 11px;
+  color: var(--halkett-dark);
+  margin-bottom: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+/* Cards & Containers - Calculator Style */
+.card, .panel {
+  background: var(--halkett-white);
+  padding: 40px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 10px rgba(35,35,32,0.08);
+  border-radius: 0;
+  animation: fadeIn 0.3s ease;
+}
+
+/* Mobile Grid for Home Page */
+.mobile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+}
+
+/* Stat Cards for Home Page */
+.stat-card {
+  background: white;
+  padding: 30px 20px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(35,35,32,0.08);
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(35,35,32,0.15);
+}
+
+.stat-number {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+.stat-label {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--halkett-dark);
+}
+
+/* Bottom Navigation for Mobile */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  padding: 15px;
+  display: none;
+  gap: 10px;
+  box-shadow: 0 -2px 10px rgba(35,35,32,0.1);
+  z-index: 50;
+}
+
+@media (max-width: 768px) {
+  .bottom-nav {
+    display: flex;
+  }
+}
+
+/* Loading States */
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--halkett-cream);
+  border-top-color: var(--halkett-blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+/* Notifications */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--halkett-blue);
+  color: var(--halkett-white);
+  padding: 16px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: var(--letter-spacing-normal);
+  box-shadow: 0 4px 12px rgba(35,35,32,0.2);
+  transform: translateX(400px);
+  transition: transform 0.3s ease;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 400px;
+  border-radius: 0;
+}
+
+.notification.show {
+  transform: translateX(0);
+}
+
+.notification.success {
+  background: var(--status-success);
+}
+
+.notification.error {
+  background: var(--status-error);
+}
+
+.notification.warning {
+  background: var(--halkett-gold);
+}
+
+/* Utility Classes */
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-muted { color: var(--halkett-secondary); }
+.text-small { font-size: 12px; }
+.text-large { font-size: 18px; }
+
+.mt-1 { margin-top: var(--spacing-xs); }
+.mt-2 { margin-top: var(--spacing-sm); }
+.mt-3 { margin-top: var(--spacing-md); }
+.mt-4 { margin-top: var(--spacing-lg); }
+.mt-5 { margin-top: var(--spacing-xl); }
+
+.mb-1 { margin-bottom: var(--spacing-xs); }
+.mb-2 { margin-bottom: var(--spacing-sm); }
+.mb-3 { margin-bottom: var(--spacing-md); }
+.mb-4 { margin-bottom: var(--spacing-lg); }
+.mb-5 { margin-bottom: var(--spacing-xl); }
+
+.p-1 { padding: var(--spacing-xs); }
+.p-2 { padding: var(--spacing-sm); }
+.p-3 { padding: var(--spacing-md); }
+.p-4 { padding: var(--spacing-lg); }
+.p-5 { padding: var(--spacing-xl); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .card, .panel {
+    padding: 24px;
+  }
+  
+  button, .btn {
+    padding: 14px 24px;
+    font-size: 11px;
+  }
+  
+  h1 {
+    letter-spacing: 8px;
+  }
+}
+
+/* Fix for Tailwind conflicts */
+.bg-\[\#EFEEE1\] {
+  background-color: #EFEEE1 !important;
+}
+
+.bg-\[\#232320\] {
+  background-color: #232320 !important;
+}
+
+.text-\[\#EFEEE1\] {
+  color: #EFEEE1 !important;
+}
+
+.text-\[\#232320\] {
+  color: #232320 !important;
+}
+
+/* Override any conflicting Catalyst styles */
+.halkett-navbar button {
+  all: unset;
+  background: var(--halkett-blue);
+  color: var(--halkett-white);
+  padding: 16px 32px;
+  font-size: 12px;
+  font-family: var(--font-primary);
+  letter-spacing: var(--letter-spacing-wide);
+  cursor: pointer;
+  font-weight: 700;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }

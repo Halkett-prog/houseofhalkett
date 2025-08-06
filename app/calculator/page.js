@@ -1,50 +1,80 @@
-// src/app/calculator/page.js
+'use client';
 export default function CalculatorPage() {
   return (
-    <main className="min-h-screen bg-[#EFEEE1]">
-      {/* Header */}
-      <header className="bg-[#232320] text-[#EFEEE1] py-8">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-4">
-            <h1 className="text-4xl font-bold tracking-[8px] mb-2">HOUSE OF HALKETT</h1>
-            <p className="text-sm tracking-[3px] opacity-80">MATERIALS & SYSTEMS</p>
-          </div>
-          <nav className="flex justify-center gap-8 mt-6">
-            <a href="/" className="text-sm tracking-wider hover:text-[#B19359] transition">HOME</a>
-            <a href="/calculator" className="text-sm tracking-wider text-[#B19359]">CALCULATOR</a>
-            <a href="/materials" className="text-sm tracking-wider hover:text-[#B19359] transition">MATERIALS</a>
-            <a href="/cart" className="text-sm tracking-wider hover:text-[#B19359] transition">CART</a>
-          </nav>
-        </div>
-      </header>
-
-      {/* Calculator Section */}
-      <section className="py-8 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-light mb-4 text-[#232320]">Wall System Calculator</h2>
-            <p className="text-gray-600">Configure your modular wall system and get instant pricing</p>
+    <main style={{ 
+      minHeight: '100vh', 
+      background: '#EFEEE1',
+      fontFamily: "'Roboto Mono', monospace"
+    }}>
+      {/* Calculator Section - NO DUPLICATE HEADER */}
+      <section style={{ padding: '40px 20px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <h2 style={{ 
+              fontSize: 'clamp(24px, 4vw, 32px)',
+              fontWeight: 700,
+              marginBottom: '15px',
+              color: '#232320',
+              textTransform: 'uppercase',
+              letterSpacing: '2.2px'
+            }}>
+              Wall System Calculator
+            </h2>
+            <p style={{ 
+              fontSize: '14px',
+              color: '#A1A2A0',
+              letterSpacing: '0.5px'
+            }}>
+              Configure your modular wall system and get instant pricing
+            </p>
           </div>
           
           {/* Calculator iframe */}
-          <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+          <div style={{ 
+            background: 'white',
+            boxShadow: '0 2px 10px rgba(35,35,32,0.08)',
+            overflow: 'hidden'
+          }}>
             <iframe 
               src="https://halkett-calculator.vercel.app"
-              className="w-full"
-              style={{ height: '800px', minHeight: '600px' }}
-              frameBorder="0"
+              style={{ 
+                width: '100%',
+                height: '800px',
+                minHeight: '600px',
+                border: 'none'
+              }}
               title="HALKETT Wall System Calculator"
             />
           </div>
 
           {/* Info section */}
-          <div className="mt-8 text-center">
-            <p className="text-gray-600 mb-4">
-              Need help? Call us at (555) 123-4567 or email info@halkett.com
+          <div style={{ 
+            marginTop: '40px',
+            textAlign: 'center',
+            padding: '30px',
+            background: 'white',
+            boxShadow: '0 2px 10px rgba(35,35,32,0.08)'
+          }}>
+            <p style={{ 
+              fontSize: '14px',
+              color: '#666',
+              marginBottom: '20px',
+              letterSpacing: '0.15px'
+            }}>
+              Need help? Call us at <strong>215.721.9331</strong> or email <strong>info@halkett.com</strong>
             </p>
             <a 
               href="/materials"
-              className="text-[#B19359] hover:underline"
+              style={{
+                color: '#B19359',
+                fontSize: '14px',
+                textDecoration: 'none',
+                fontWeight: 600,
+                letterSpacing: '0.5px',
+                transition: 'color 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.color = '#232320'}
+              onMouseLeave={(e) => e.target.style.color = '#B19359'}
             >
               Looking for other custom woodworking? Browse our materials →
             </a>
