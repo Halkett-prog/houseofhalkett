@@ -1,5 +1,29 @@
 'use client';
 
+import React, { useEffect } from 'react';
+import './calculator.css';
+
+// Import the calculator functions
+import * as config from './config.js';
+import * as calculations from './calculations.js';
+import * as ui from './ui.js';
+import * as main from './main.js';
+
+export default function CalculatorComponent() {
+  useEffect(() => {
+    // Initialize the calculator when component mounts
+    if (typeof window !== 'undefined') {
+      // Make functions available globally
+      window.toggleTrimMaterial = main.toggleTrimMaterial;
+      window.nextStep = main.nextStep;
+      window.previousStep = main.previousStep;
+      window.generateWalls = main.generateWalls;
+      // Add other functions as needed
+    }
+  }, []);
+
+  // Rest of your component...
+
 import React, { useEffect, useState } from 'react';
 import './calculator.css';
 
