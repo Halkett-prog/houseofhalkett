@@ -3,9 +3,9 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import HalkettNavbar from '../components/halkett-navbar';
 
 export default function CartPage() {
+  // ... rest of your code
   // Paste the entire UnifiedCart component code here
   // but import your actual supabase client from lib/supabase
   
