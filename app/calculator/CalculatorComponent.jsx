@@ -1,48 +1,57 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import './calculator.css';
-
-// Import the calculator functions
-import * as config from './config.js';
-import * as calculations from './calculations.js';
-import * as ui from './ui.js';
-import * as main from './main.js';
-
-export default function CalculatorComponent() {
-  useEffect(() => {
-    // Initialize the calculator when component mounts
-    if (typeof window !== 'undefined') {
-      // Make functions available globally
-      window.toggleTrimMaterial = main.toggleTrimMaterial;
-      window.nextStep = main.nextStep;
-      window.previousStep = main.previousStep;
-      window.generateWalls = main.generateWalls;
-      // Add other functions as needed
-    }
-  }, []);
-
-  // Rest of your component...
-
 import React, { useEffect, useState } from 'react';
 import './calculator.css';
 
 export default function CalculatorComponent() {
   const [currentStep, setCurrentStep] = useState(1);
 
-  useEffect(() => {
-    // Load the calculator scripts when component mounts
-    const loadCalculatorScripts = async () => {
-      try {
-        // We'll initialize the calculator here
-        console.log('Calculator component loaded');
-      } catch (error) {
-        console.error('Error loading calculator:', error);
-      }
+useEffect(() => {
+  // Initialize the calculator when component mounts
+  if (typeof window !== 'undefined') {
+    // Make functions available globally
+    window.toggleTrimMaterial = main.toggleTrimMaterial;
+    window.nextStep = main.nextStep;
+    window.previousStep = main.previousStep;
+    window.generateWalls = main.generateWalls;
+    
+    // Add the addToCart function
+    window.addToCart = function() {
+      // Get the current configuration from the results
+      const config = {
+        // Gather all the form data
+        projectName: document.getElementById('projectName')?.value || 'Untitled Project',
+        material: document.getElementById('material')?.value,
+        profile: document.getElementById('profile')?.value,
+        boardWidth: document.getElementById('boardWidth')?.value,
+        coverage: document.querySelector('input[name="coverage"]:checked')?.value,
+        // Add all other fields you need
+        results: document.getElementById('resultsContainer')?.innerText,
+        cost: document.getElementById('costEstimateContainer')?.innerText
+      };
+      
+      // Save to localStorage
+      localStorage.setItem('pendingCalculatorOrder', JSON.stringify(config));
+      
+      // Navigate to cart
+      window.location.href = '/cart';
     };
-
-    loadCalculatorScripts();
-  }, []);
+    
+    // Add other functions as needed
+    window.calculateResults = calculations.calculateResults;
+    window.saveConfiguration = main.saveConfiguration;
+    window.generatePDF = main.generatePDF;
+    window.emailSpecification = main.emailSpecification;
+    window.showSampleRequest = ui.showSampleRequest;
+    window.closeSampleModal = ui.closeSampleModal;
+    window.closeGallery = ui.closeGallery;
+    window.closeGalleryOutside = ui.closeGalleryOutside;
+    window.openGallery = ui.openGallery;
+    window.goToSystemOverview = main.goToSystemOverview;
+    window.closeRecentModal = ui.closeRecentModal;
+    window.submitSampleRequest = ui.submitSampleRequest;
+  }
+}, []);
 
  return (
     <div className="calculator-wrapper">

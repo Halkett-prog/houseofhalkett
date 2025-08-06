@@ -1,10 +1,14 @@
-}/* HALKETT Calculator Styles v60 */
+/* HALKETT Calculator Styles v60 */
+
+/* This @import must be the FIRST line of actual CSS */
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600;700&display=swap');
 
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Rest of your CSS continues as-is */
 body {
   font-family: 'Roboto Mono', monospace;
   background-color: #EFEEE1;
