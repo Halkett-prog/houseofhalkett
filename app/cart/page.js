@@ -11,7 +11,6 @@ export default function CartPage() {
   
   return (
     <>
-      <HalkettNavbar />
       <div style={{ 
         fontFamily: "'Roboto Mono', monospace",
         background: '#EFEEE1',
