@@ -6,13 +6,25 @@ import './calculator.css';
 export default function CalculatorComponent() {
  const [currentStep, setCurrentStep] = useState(1);
 
-useEffect(() => {
-  console.log('=== CALCULATOR COMPONENT MOUNTED ===');
-  
-  // Initialize the calculator when component mounts
-  if (typeof window !== 'undefined') {
-    console.log('Setting up calculator functions...');
-    
+ useEffect(() => {
+   console.log('=== CALCULATOR COMPONENT MOUNTED ===');
+   
+   // Initialize the calculator when component mounts
+   if (typeof window !== 'undefined') {
+     console.log('Setting up calculator functions...');
+     
+     // IMPORTANT: Set initial step to 1
+     setTimeout(() => {
+       // Hide all steps first
+       document.querySelectorAll('.step').forEach(s => {
+         s.classList.remove('active');
+       });
+       // Show only step 1
+       const step1 = document.getElementById('step1');
+       if (step1) {
+         step1.classList.add('active');
+       }
+     }, 100);
      
      // 1. Fix the toggleTrimMaterial error first
      window.toggleTrimMaterial = function() {
@@ -20,7 +32,31 @@ useEffect(() => {
        // Just a placeholder for now to stop the error
      };
      
-     // 2. Add the addToCart function
+     // 2. Implement nextStep properly
+     window.nextStep = function(currentStep) {
+       console.log('nextStep from', currentStep);
+       document.querySelectorAll('.step').forEach(s => {
+         s.classList.remove('active');
+       });
+       const nextStep = document.getElementById(`step${currentStep + 1}`);
+       if (nextStep) {
+         nextStep.classList.add('active');
+       }
+     };
+     
+     // 3. Implement previousStep properly
+     window.previousStep = function(currentStep) {
+       console.log('previousStep from', currentStep);
+       document.querySelectorAll('.step').forEach(s => {
+         s.classList.remove('active');
+       });
+       const prevStep = document.getElementById(`step${currentStep - 1}`);
+       if (prevStep) {
+         prevStep.classList.add('active');
+       }
+     };
+     
+     // 4. Add the addToCart function
      window.addToCart = function() {
        alert('Add to Cart clicked!'); // This will show a popup
        
@@ -37,9 +73,7 @@ useEffect(() => {
        window.location.href = '/cart';
      };
      
-     // 3. Add other essential functions as placeholders
-     window.nextStep = function() { console.log('nextStep'); };
-     window.previousStep = function() { console.log('previousStep'); };
+     // 5. Add other essential functions as placeholders
      window.generateWalls = function() { console.log('generateWalls'); };
      window.calculateResults = function() { console.log('calculateResults'); };
      window.saveConfiguration = function() { console.log('saveConfiguration'); };
