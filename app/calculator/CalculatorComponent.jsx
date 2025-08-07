@@ -6,10 +6,13 @@ import './calculator.css';
 export default function CalculatorComponent() {
  const [currentStep, setCurrentStep] = useState(1);
 
- useEffect(() => {
-   // Initialize the calculator when component mounts
-   if (typeof window !== 'undefined') {
-     console.log('Setting up calculator functions...');
+useEffect(() => {
+  console.log('=== CALCULATOR COMPONENT MOUNTED ===');
+  
+  // Initialize the calculator when component mounts
+  if (typeof window !== 'undefined') {
+    console.log('Setting up calculator functions...');
+    
      
      // 1. Fix the toggleTrimMaterial error first
      window.toggleTrimMaterial = function() {
@@ -723,7 +726,6 @@ export default function CalculatorComponent() {
          </form>
        </div>
      </div>
-   </div>
    </div>
  );
 }
