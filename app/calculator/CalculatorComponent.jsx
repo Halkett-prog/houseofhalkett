@@ -6,7 +6,7 @@ import './calculator.css';
 export default function CalculatorComponent() {
   const [currentStep, setCurrentStep] = useState(1);
 
-  useEffect(() => {
+useEffect(() => {
     console.log('=== CALCULATOR COMPONENT MOUNTED ===');
     
     // Initialize the calculator when component mounts
@@ -18,21 +18,24 @@ export default function CalculatorComponent() {
         const allSteps = document.querySelectorAll('.step');
         console.log('Found steps:', allSteps.length);
         
-        // Remove active from ALL steps
+        // Force hide ALL steps with inline styles
         allSteps.forEach((step, index) => {
           step.classList.remove('active');
+          step.style.display = 'none'; // Force with inline style
         });
         
         // Show ONLY step 1
         const step1 = document.getElementById('step1');
         if (step1) {
           step1.classList.add('active');
+          step1.style.display = 'block'; // Force with inline style
           console.log('Step 1 activated');
         }
       };
       
-      // Initialize immediately
+      // Initialize immediately and after a delay
       initializeSteps();
+      setTimeout(initializeSteps, 100);
       
       // 1. Fix the toggleTrimMaterial error first
       window.toggleTrimMaterial = function() {
@@ -43,10 +46,11 @@ export default function CalculatorComponent() {
       window.nextStep = function(currentStep) {
         console.log('nextStep from step', currentStep);
         
-        // Hide ALL steps first
+        // Force hide ALL steps with inline styles
         const allSteps = document.querySelectorAll('.step');
         allSteps.forEach(s => {
           s.classList.remove('active');
+          s.style.display = 'none'; // Force with inline style
         });
         
         // Calculate the next step number
@@ -57,6 +61,7 @@ export default function CalculatorComponent() {
         const nextStepElement = document.getElementById(`step${nextStepNum}`);
         if (nextStepElement) {
           nextStepElement.classList.add('active');
+          nextStepElement.style.display = 'block'; // Force with inline style
           console.log('Successfully moved to step', nextStepNum);
           
           // Scroll to top of the page
@@ -70,10 +75,11 @@ export default function CalculatorComponent() {
       window.previousStep = function(currentStep) {
         console.log('previousStep from step', currentStep);
         
-        // Hide ALL steps first
+        // Force hide ALL steps with inline styles
         const allSteps = document.querySelectorAll('.step');
         allSteps.forEach(s => {
           s.classList.remove('active');
+          s.style.display = 'none'; // Force with inline style
         });
         
         // Calculate the previous step number
@@ -84,6 +90,7 @@ export default function CalculatorComponent() {
         const prevStepElement = document.getElementById(`step${prevStepNum}`);
         if (prevStepElement) {
           prevStepElement.classList.add('active');
+          prevStepElement.style.display = 'block'; // Force with inline style
           console.log('Successfully moved back to step', prevStepNum);
           
           // Scroll to top of the page
@@ -97,16 +104,18 @@ export default function CalculatorComponent() {
       window.goToSystemOverview = function() {
         console.log('Going to System Overview');
         
-        // Hide ALL steps
+        // Force hide ALL steps with inline styles
         const allSteps = document.querySelectorAll('.step');
         allSteps.forEach(s => {
           s.classList.remove('active');
+          s.style.display = 'none'; // Force with inline style
         });
         
         // Show step 1
         const step1 = document.getElementById('step1');
         if (step1) {
           step1.classList.add('active');
+          step1.style.display = 'block'; // Force with inline style
           window.scrollTo(0, 0);
         }
       };
