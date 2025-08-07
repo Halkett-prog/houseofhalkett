@@ -6,100 +6,117 @@ import './calculator.css';
 export default function CalculatorComponent() {
  const [currentStep, setCurrentStep] = useState(1);
 
- useEffect(() => {
-   console.log('=== CALCULATOR COMPONENT MOUNTED ===');
-   
-   // Initialize the calculator when component mounts
-   if (typeof window !== 'undefined') {
-     console.log('Setting up calculator functions...');
-     
-     // IMPORTANT: Set initial step to 1
-     setTimeout(() => {
-       // Hide all steps first
-       document.querySelectorAll('.step').forEach(s => {
-         s.classList.remove('active');
-       });
-       // Show only step 1
-       const step1 = document.getElementById('step1');
-       if (step1) {
-         step1.classList.add('active');
-       }
-     }, 100);
-     
-     // 1. Fix the toggleTrimMaterial error first
-     window.toggleTrimMaterial = function() {
-       console.log('toggleTrimMaterial called');
-       // Just a placeholder for now to stop the error
-     };
-     
-     // 2. Implement nextStep properly
-     window.nextStep = function(currentStep) {
-       console.log('nextStep from', currentStep);
-       document.querySelectorAll('.step').forEach(s => {
-         s.classList.remove('active');
-       });
-       const nextStep = document.getElementById(`step${currentStep + 1}`);
-       if (nextStep) {
-         nextStep.classList.add('active');
-       }
-     };
-     
-     // 3. Implement previousStep properly
-     window.previousStep = function(currentStep) {
-       console.log('previousStep from', currentStep);
-       document.querySelectorAll('.step').forEach(s => {
-         s.classList.remove('active');
-       });
-       const prevStep = document.getElementById(`step${currentStep - 1}`);
-       if (prevStep) {
-         prevStep.classList.add('active');
-       }
-     };
-     
-     // 4. Add the addToCart function
-     window.addToCart = function() {
-       alert('Add to Cart clicked!'); // This will show a popup
-       
-       const config = {
-         test: 'Testing if save works',
-         timestamp: new Date().toISOString()
-       };
-       
-       // Save to localStorage
-       localStorage.setItem('pendingCalculatorOrder', JSON.stringify(config));
-       console.log('Saved to localStorage:', config);
-       
-       // Go to cart
-       window.location.href = '/cart';
-     };
-     
-     // 5. Add other essential functions as placeholders
-     window.generateWalls = function() { console.log('generateWalls'); };
-     window.calculateResults = function() { console.log('calculateResults'); };
-     window.saveConfiguration = function() { console.log('saveConfiguration'); };
-     window.generatePDF = function() { console.log('generatePDF'); };
-     window.emailSpecification = function() { console.log('emailSpecification'); };
-     window.showSampleRequest = function() { console.log('showSampleRequest'); };
-     window.closeSampleModal = function() { console.log('closeSampleModal'); };
-     window.closeGallery = function() { console.log('closeGallery'); };
-     window.closeGalleryOutside = function() { console.log('closeGalleryOutside'); };
-     window.openGallery = function() { console.log('openGallery'); };
-     window.goToSystemOverview = function() { console.log('goToSystemOverview'); };
-     window.closeRecentModal = function() { console.log('closeRecentModal'); };
-     window.submitSampleRequest = function() { console.log('submitSampleRequest'); };
-     window.handleCoverageChange = function() { console.log('handleCoverageChange'); };
-     window.updateTrimOptions = function() { console.log('updateTrimOptions'); };
-     window.updateBoardRecommendation = function() { console.log('updateBoardRecommendation'); };
-     window.toggleUnits = function() { console.log('toggleUnits'); };
-     window.showRecentConfigurations = function() { console.log('showRecentConfigurations'); };
-     window.updateMaterialDetails = function() { console.log('updateMaterialDetails'); };
-     
-     // Initialize projectConfig
-     window.projectConfig = {};
-     
-     console.log('All functions registered');
-   }
- }, []);
+useEffect(() => {
+  console.log('=== CALCULATOR COMPONENT MOUNTED ===');
+  
+  // Initialize the calculator when component mounts
+  if (typeof window !== 'undefined') {
+    console.log('Setting up calculator functions...');
+    
+    // Force Step 1 to be active after component renders
+    const initializeSteps = () => {
+      const allSteps = document.querySelectorAll('.step');
+      console.log('Found steps:', allSteps.length);
+      
+      // Remove active from ALL steps
+      allSteps.forEach((step, index) => {
+        step.classList.remove('active');
+        step.style.display = 'none'; // Force hide
+      });
+      
+      // Show ONLY step 1
+      const step1 = document.getElementById('step1');
+      if (step1) {
+        step1.classList.add('active');
+        step1.style.display = 'block'; // Force show
+        console.log('Step 1 activated');
+      } else {
+        console.log('Step 1 not found!');
+      }
+    };
+    
+    // Try multiple times to ensure DOM is ready
+    setTimeout(initializeSteps, 0);
+    setTimeout(initializeSteps, 100);
+    setTimeout(initializeSteps, 500);
+    
+    // 1. Fix the toggleTrimMaterial error first
+    window.toggleTrimMaterial = function() {
+      console.log('toggleTrimMaterial called');
+    };
+    
+    // 2. Implement nextStep properly
+    window.nextStep = function(currentStep) {
+      console.log('nextStep from', currentStep);
+      document.querySelectorAll('.step').forEach(s => {
+        s.classList.remove('active');
+        s.style.display = 'none';
+      });
+      const nextStep = document.getElementById(`step${currentStep + 1}`);
+      if (nextStep) {
+        nextStep.classList.add('active');
+        nextStep.style.display = 'block';
+        console.log('Moved to step', currentStep + 1);
+      }
+    };
+    
+    // 3. Implement previousStep properly
+    window.previousStep = function(currentStep) {
+      console.log('previousStep from', currentStep);
+      document.querySelectorAll('.step').forEach(s => {
+        s.classList.remove('active');
+        s.style.display = 'none';
+      });
+      const prevStep = document.getElementById(`step${currentStep - 1}`);
+      if (prevStep) {
+        prevStep.classList.add('active');
+        prevStep.style.display = 'block';
+        console.log('Moved to step', currentStep - 1);
+      }
+    };
+    
+    // 4. Add the addToCart function
+    window.addToCart = function() {
+      alert('Add to Cart clicked!');
+      
+      const config = {
+        test: 'Testing if save works',
+        timestamp: new Date().toISOString()
+      };
+      
+      localStorage.setItem('pendingCalculatorOrder', JSON.stringify(config));
+      console.log('Saved to localStorage:', config);
+      
+      window.location.href = '/cart';
+    };
+    
+    // 5. Add other essential functions as placeholders
+    window.generateWalls = function() { console.log('generateWalls'); };
+    window.calculateResults = function() { console.log('calculateResults'); };
+    window.saveConfiguration = function() { console.log('saveConfiguration'); };
+    window.generatePDF = function() { console.log('generatePDF'); };
+    window.emailSpecification = function() { console.log('emailSpecification'); };
+    window.showSampleRequest = function() { console.log('showSampleRequest'); };
+    window.closeSampleModal = function() { console.log('closeSampleModal'); };
+    window.closeGallery = function() { console.log('closeGallery'); };
+    window.closeGalleryOutside = function() { console.log('closeGalleryOutside'); };
+    window.openGallery = function() { console.log('openGallery'); };
+    window.goToSystemOverview = function() { console.log('goToSystemOverview'); };
+    window.closeRecentModal = function() { console.log('closeRecentModal'); };
+    window.submitSampleRequest = function() { console.log('submitSampleRequest'); };
+    window.handleCoverageChange = function() { console.log('handleCoverageChange'); };
+    window.updateTrimOptions = function() { console.log('updateTrimOptions'); };
+    window.updateBoardRecommendation = function() { console.log('updateBoardRecommendation'); };
+    window.toggleUnits = function() { console.log('toggleUnits'); };
+    window.showRecentConfigurations = function() { console.log('showRecentConfigurations'); };
+    window.updateMaterialDetails = function() { console.log('updateMaterialDetails'); };
+    
+    // Initialize projectConfig
+    window.projectConfig = {};
+    
+    console.log('All functions registered');
+  }
+}, []);
 
  return (
    <div className="calculator-wrapper">
