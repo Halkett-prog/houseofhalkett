@@ -1,313 +1,262 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function CartPage() {
-  const [calculatorItems, setCalculatorItems] = useState([]);
-  const [materialItems, setMaterialItems] = useState([]);
+  const [calculatorOrder, setCalculatorOrder] = useState(null);
+  const [materialOrders, setMaterialOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    // Load calculator configuration
-    const calcConfig = localStorage.getItem('pendingCalculatorOrder');
-    if (calcConfig) {
+    // Load cart items from localStorage
+    const loadCartItems = () => {
       try {
-        const parsed = JSON.parse(calcConfig);
-        setCalculatorItems([parsed]);
-      } catch (e) {
-        console.error('Error parsing calculator data:', e);
-      }
-    }
+        // Load calculator configuration
+        const calcOrder = localStorage.getItem('pendingCalculatorOrder');
+        if (calcOrder) {
+          setCalculatorOrder(JSON.parse(calcOrder));
+        }
 
-    // Load material selections
-    const materials = localStorage.getItem('materialOrders');
-    if (materials) {
-      try {
-        const parsed = JSON.parse(materials);
-        setMaterialItems(Array.isArray(parsed) ? parsed : [parsed]);
-      } catch (e) {
-        console.error('Error parsing materials data:', e);
+        // Load material orders
+        const matOrders = localStorage.getItem('materialOrders');
+        if (matOrders) {
+          setMaterialOrders(JSON.parse(matOrders));
+        }
+      } catch (error) {
+        console.error('Error loading cart items:', error);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
 
-    setLoading(false);
+    loadCartItems();
   }, []);
 
-  const removeCalculatorItem = (index) => {
-    setCalculatorItems([]);
+  const removeCalculatorOrder = () => {
     localStorage.removeItem('pendingCalculatorOrder');
+    setCalculatorOrder(null);
   };
 
-  const removeMaterialItem = (index) => {
-    const newItems = materialItems.filter((_, i) => i !== index);
-    setMaterialItems(newItems);
-    if (newItems.length === 0) {
-      localStorage.removeItem('materialOrders');
-    } else {
-      localStorage.setItem('materialOrders', JSON.stringify(newItems));
-    }
-  };
-
-  const calculateTotal = () => {
-    let total = 0;
-    calculatorItems.forEach(item => {
-      total += item.estimatedCost || 0;
-    });
-    materialItems.forEach(item => {
-      total += (item.price || 0) * (item.quantity || 1);
-    });
-    return total;
+  const removeMaterialOrder = (index) => {
+    const updatedOrders = materialOrders.filter((_, i) => i !== index);
+    setMaterialOrders(updatedOrders);
+    localStorage.setItem('materialOrders', JSON.stringify(updatedOrders));
   };
 
   const clearCart = () => {
     localStorage.removeItem('pendingCalculatorOrder');
     localStorage.removeItem('materialOrders');
-    setCalculatorItems([]);
-    setMaterialItems([]);
+    setCalculatorOrder(null);
+    setMaterialOrders([]);
+  };
+
+  const getTotal = () => {
+    let total = 0;
+    if (calculatorOrder?.costEstimate?.total) {
+      total += calculatorOrder.costEstimate.total;
+    }
+    materialOrders.forEach(order => {
+      if (order.price) total += order.price;
+    });
+    return total;
+  };
+
+  const proceedToCheckout = () => {
+    // In a real app, this would go to checkout
+    alert('Checkout functionality will be implemented with Stripe integration');
   };
 
   if (loading) {
     return (
-      <div style={{ padding: '50px', textAlign: 'center', minHeight: '100vh', background: '#EFEEE1' }}>
-        <p>Loading cart...</p>
-      </div>
-    );
-  }
-
-  const isEmpty = calculatorItems.length === 0 && materialItems.length === 0;
-
-  if (isEmpty) {
-    return (
-      <div style={{ 
-        padding: '50px', 
-        textAlign: 'center', 
-        minHeight: '100vh', 
-        background: '#EFEEE1',
-        fontFamily: "'Roboto Mono', monospace"
-      }}>
-        <h1 style={{ color: '#232320', marginBottom: '20px' }}>YOUR CART IS EMPTY</h1>
-        <p style={{ color: '#A1A2A0', marginBottom: '30px' }}>
-          Configure a wall system or browse our materials to get started.
-        </p>
-        <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
-          <button 
-            onClick={() => window.location.href = '/calculator'}
-            style={{
-              background: '#34499E',
-              color: 'white',
-              border: 'none',
-              padding: '15px 30px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              letterSpacing: '2px'
-            }}
-          >
-            WALL CALCULATOR
-          </button>
-          <button 
-            onClick={() => window.location.href = '/materials'}
-            style={{
-              background: '#232320',
-              color: '#EFEEE1',
-              border: 'none',
-              padding: '15px 30px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              letterSpacing: '2px'
-            }}
-          >
-            BROWSE MATERIALS
-          </button>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#34499E] mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading cart...</p>
         </div>
       </div>
     );
   }
+
+  const isEmpty = !calculatorOrder && materialOrders.length === 0;
 
   return (
-    <div style={{
-      padding: '40px 20px',
-      minHeight: '100vh',
-      background: '#EFEEE1',
-      fontFamily: "'Roboto Mono', monospace"
-    }}>
-      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-        <h1 style={{
-          textAlign: 'center',
-          marginBottom: '40px',
-          color: '#232320',
-          letterSpacing: '4px'
-        }}>
-          SHOPPING CART
+    <div className="min-h-screen bg-[#EFEEE1] py-12">
+      <div className="max-w-4xl mx-auto px-4">
+        <h1 className="text-3xl font-bold text-[#232320] mb-8 tracking-wider uppercase">
+          Your Cart
         </h1>
 
-        {/* Calculator Items */}
-        {calculatorItems.length > 0 && (
-          <div style={{ marginBottom: '30px' }}>
-            <h2 style={{
-              fontSize: '18px',
-              marginBottom: '20px',
-              color: '#232320',
-              borderBottom: '2px solid #232320',
-              paddingBottom: '10px'
-            }}>
-              WALL CONFIGURATIONS
-            </h2>
-            
-            {calculatorItems.map((item, index) => (
-              <div key={index} style={{
-                background: 'white',
-                padding: '20px',
-                marginBottom: '15px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'start'
-              }}>
-                <div>
-                  <h3 style={{ marginBottom: '10px', color: '#232320' }}>
-                    {item.projectName || 'Wall Configuration'}
-                  </h3>
-                  <p style={{ color: '#666', fontSize: '14px' }}>
-                    Height: {item.wallHeight}" | 
-                    Coverage: {item.coverageType} | 
-                    Profile: {item.profile} | 
-                    Material: {item.boardMaterial}
-                  </p>
-                  <p style={{ marginTop: '10px', fontSize: '18px', color: '#34499E', fontWeight: 'bold' }}>
-                    ${(item.estimatedCost || 0).toLocaleString()}
-                  </p>
-                </div>
-                <button 
-                  onClick={() => removeCalculatorItem(index)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#999',
-                    cursor: 'pointer',
-                    fontSize: '20px'
-                  }}
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
+        {isEmpty ? (
+          <div className="bg-white p-12 text-center shadow-sm">
+            <svg className="w-24 h-24 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+            </svg>
+            <h2 className="text-xl font-semibold text-gray-700 mb-2">Your cart is empty</h2>
+            <p className="text-gray-500 mb-6">Add items from the calculator or materials catalog</p>
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={() => router.push('/calculator')}
+                className="px-6 py-3 bg-[#34499E] text-white font-semibold tracking-wider uppercase hover:bg-[#232320] transition-colors"
+              >
+                Use Calculator
+              </button>
+              <button
+                onClick={() => router.push('/materials')}
+                className="px-6 py-3 bg-[#B19359] text-white font-semibold tracking-wider uppercase hover:bg-[#232320] transition-colors"
+              >
+                Browse Materials
+              </button>
+            </div>
           </div>
-        )}
-
-        {/* Material Items */}
-        {materialItems.length > 0 && (
-          <div style={{ marginBottom: '30px' }}>
-            <h2 style={{
-              fontSize: '18px',
-              marginBottom: '20px',
-              color: '#232320',
-              borderBottom: '2px solid #232320',
-              paddingBottom: '10px'
-            }}>
-              MATERIALS
-            </h2>
-            
-            {materialItems.map((item, index) => (
-              <div key={index} style={{
-                background: 'white',
-                padding: '20px',
-                marginBottom: '15px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'start'
-              }}>
-                <div>
-                  <h3 style={{ marginBottom: '10px', color: '#232320' }}>
-                    {item.name}
-                  </h3>
-                  {item.description && (
-                    <p style={{ color: '#666', fontSize: '14px', marginBottom: '5px' }}>
-                      {item.description}
-                    </p>
+        ) : (
+          <>
+            {/* Calculator Order */}
+            {calculatorOrder && (
+              <div className="bg-white p-6 mb-6 shadow-sm">
+                <div className="flex justify-between items-start mb-4">
+                  <h2 className="text-xl font-semibold text-[#232320]">Wall System Configuration</h2>
+                  <button
+                    onClick={removeCalculatorOrder}
+                    className="text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                  </button>
+                </div>
+                
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Project Name:</span>
+                    <span className="font-medium">{calculatorOrder.projectName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Material:</span>
+                    <span className="font-medium">{calculatorOrder.material}</span>
+                  </div>
+                  {calculatorOrder.materialDetail && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Finish:</span>
+                      <span className="font-medium">{calculatorOrder.materialDetail}</span>
+                    </div>
                   )}
-                  <p style={{ color: '#666', fontSize: '14px' }}>
-                    Quantity: {item.quantity || 1}
-                  </p>
-                  <p style={{ marginTop: '10px', fontSize: '18px', color: '#34499E', fontWeight: 'bold' }}>
-                    ${((item.price || 0) * (item.quantity || 1)).toLocaleString()}
-                  </p>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Profile:</span>
+                    <span className="font-medium capitalize">{calculatorOrder.profile}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Coverage:</span>
+                    <span className="font-medium">
+                      {calculatorOrder.coverage === 'full' ? 'Full Height' : `Wainscot ${calculatorOrder.coverageHeight}"`}
+                    </span>
+                  </div>
+                  {calculatorOrder.walls && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Number of Walls:</span>
+                      <span className="font-medium">{calculatorOrder.walls.length}</span>
+                    </div>
+                  )}
                 </div>
-                <button 
-                  onClick={() => removeMaterialItem(index)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#999',
-                    cursor: 'pointer',
-                    fontSize: '20px'
-                  }}
-                >
-                  ✕
-                </button>
+
+                {calculatorOrder.costEstimate && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="flex justify-between text-lg font-semibold">
+                      <span>Estimated Total:</span>
+                      <span className="text-[#34499E]">
+                        ${calculatorOrder.costEstimate.total?.toFixed(2) || '0.00'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Material Orders */}
+            {materialOrders.map((order, index) => (
+              <div key={index} className="bg-white p-6 mb-6 shadow-sm">
+                <div className="flex justify-between items-start mb-4">
+                  <h2 className="text-xl font-semibold text-[#232320]">{order.name || 'Material Order'}</h2>
+                  <button
+                    onClick={() => removeMaterialOrder(index)}
+                    className="text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                  </button>
+                </div>
+                
+                <div className="space-y-2 text-sm">
+                  {order.description && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Description:</span>
+                      <span className="font-medium">{order.description}</span>
+                    </div>
+                  )}
+                  {order.quantity && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Quantity:</span>
+                      <span className="font-medium">{order.quantity}</span>
+                    </div>
+                  )}
+                </div>
+
+                {order.price && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="flex justify-between text-lg font-semibold">
+                      <span>Price:</span>
+                      <span className="text-[#34499E]">${order.price.toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
-          </div>
-        )}
 
-        {/* Cart Total */}
-        <div style={{
-          background: '#232320',
-          color: '#EFEEE1',
-          padding: '30px',
-          marginTop: '40px'
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '20px'
-          }}>
-            <h3 style={{ fontSize: '20px', letterSpacing: '2px' }}>
-              ESTIMATED TOTAL
-            </h3>
-            <p style={{ fontSize: '28px', fontWeight: 'bold', color: '#B19359' }}>
-              ${calculateTotal().toLocaleString()}
-            </p>
-          </div>
-          
-          <p style={{ fontSize: '12px', opacity: 0.8, marginBottom: '20px' }}>
-            * Final pricing will be confirmed after design review
-          </p>
-          
-          <div style={{ display: 'flex', gap: '15px' }}>
-            <button
-              onClick={clearCart}
-              style={{
-                flex: 1,
-                background: 'transparent',
-                color: '#EFEEE1',
-                border: '2px solid #EFEEE1',
-                padding: '15px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                letterSpacing: '2px'
-              }}
-            >
-              CLEAR CART
-            </button>
-            
-            <button
-              onClick={() => alert('Checkout coming soon! For now, please call 215.721.9331')}
-              style={{
-                flex: 2,
-                background: '#B19359',
-                color: '#232320',
-                border: 'none',
-                padding: '15px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                letterSpacing: '2px',
-                fontWeight: 'bold'
-              }}
-            >
-              PROCEED TO CHECKOUT
-            </button>
-          </div>
-        </div>
+            {/* Cart Summary */}
+            <div className="bg-[#232320] text-[#EFEEE1] p-6 shadow-sm">
+              <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+              
+              <div className="space-y-2 mb-4">
+                {calculatorOrder && (
+                  <div className="flex justify-between">
+                    <span>Wall System Configuration</span>
+                    <span>${calculatorOrder.costEstimate?.total?.toFixed(2) || '0.00'}</span>
+                  </div>
+                )}
+                {materialOrders.map((order, index) => (
+                  <div key={index} className="flex justify-between">
+                    <span>{order.name || 'Material Order'}</span>
+                    <span>${order.price?.toFixed(2) || '0.00'}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t border-gray-600 pt-4">
+                <div className="flex justify-between text-xl font-bold">
+                  <span>Total</span>
+                  <span className="text-[#B19359]">${getTotal().toFixed(2)}</span>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-3">
+                <button
+                  onClick={proceedToCheckout}
+                  className="w-full py-3 bg-[#B19359] text-white font-semibold tracking-wider uppercase hover:bg-[#34499E] transition-colors"
+                >
+                  Proceed to Checkout
+                </button>
+                <button
+                  onClick={clearCart}
+                  className="w-full py-3 bg-transparent border border-[#EFEEE1] text-[#EFEEE1] font-semibold tracking-wider uppercase hover:bg-[#EFEEE1] hover:text-[#232320] transition-colors"
+                >
+                  Clear Cart
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

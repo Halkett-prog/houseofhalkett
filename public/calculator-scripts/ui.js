@@ -1,5 +1,40 @@
 // HALKETT Calculator - UI Functions v60
+// HALKETT Calculator - UI Functions v60
 
+// Check for global variables and use them if available
+if (typeof projectConfig === 'undefined') {
+    var projectConfig = {};
+}
+if (typeof globalSpecification === 'undefined') {
+    var globalSpecification = '';
+}
+if (typeof globalCostEstimate === 'undefined') {
+    var globalCostEstimate = null;
+}
+if (typeof globalWallDetails === 'undefined') {
+    var globalWallDetails = [];
+}
+if (typeof recentConfigurations === 'undefined') {
+    var recentConfigurations = [];
+}
+
+// All your existing functions stay exactly the same...
+// (Copy all the functions from your file starting from the debounce function)
+
+// Debounce function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// ... rest of your ui.js file exactly as it is ...
 // Debounce function
 function debounce(func, wait) {
     let timeout;

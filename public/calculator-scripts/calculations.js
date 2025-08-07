@@ -1,5 +1,19 @@
 // HALKETT Calculator - Calculation Functions v60
 
+// Use existing global variables or create them if they don't exist
+if (typeof projectConfig === 'undefined') {
+    var projectConfig = {};
+}
+if (typeof calculationCache === 'undefined') {
+    var calculationCache = new Map();
+}
+
+// If in browser environment, use window variables
+if (typeof window !== 'undefined') {
+    projectConfig = window.projectConfig || {};
+    calculationCache = window.calculationCache || new Map();
+}
+
 // Memoized calculation wrapper
 function memoizedCalculation(key, calculationFn) {
     if (calculationCache.has(key)) {
@@ -63,6 +77,9 @@ function findPanelCombination(targetSpace) {
     targetSpace = Math.round(targetSpace * 16) / 16;
     if (targetSpace <= 0) return null;
     
+    // Use window.P2_SIZES if available, otherwise use default
+    const P2_SIZES = (typeof window !== 'undefined' && window.P2_SIZES) ? window.P2_SIZES : [2, 4, 6];
+    
     for (const p2 of P2_SIZES) {
         const p1Space = Math.round((targetSpace - p2) * 16) / 16;
         if (p1Space < 0) continue;
@@ -106,7 +123,7 @@ function findPanelCombination(targetSpace) {
 }
 
 // Main wall calculation function
-function calculateWall(wallLength, leftType, rightType, isConnected = false) {
+function calculateWall(wallLength, leftType, rightType, isConnected) {
     wallLength = Math.round(wallLength * 8) / 8;
     
     if (wallLength < 6) {
@@ -151,7 +168,6 @@ function calculateWall(wallLength, leftType, rightType, isConnected = false) {
     
     return { success: false, error: "No valid configuration found. Try adjusting the wall length." };
 }
-
 // Load advanced pricing if available
 function loadCalculationPricing() {
     const advancedStored = localStorage.getItem('halkettAdvancedPricing');
