@@ -3,11 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import './calculator.css';
 
-// Import your calculator configuration and functions
-import * as config from './config.js';
-import * as calculations from './calculations.js';
-import * as ui from './ui.js';
-
 export default function CalculatorComponent() {
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -18,21 +13,32 @@ export default function CalculatorComponent() {
     if (typeof window !== 'undefined') {
       console.log('Setting up calculator functions...');
       
-      // Make config available globally
-      window.MATERIALS = config.MATERIALS;
-      window.PROFILES = config.PROFILES;
-      window.TRIM_MATERIALS = config.TRIM_MATERIALS;
-      
-      // Connect all the REAL functions from your files
-      window.updateMaterialDetails = ui.updateMaterialDetails;
-      window.toggleTrimMaterial = ui.toggleTrimMaterial;
-      window.showModal = ui.showModal;
-      window.closeModal = ui.closeModal;
-      
-      window.generateWalls = calculations.generateWalls;
-      window.calculateResults = calculations.calculateResults;
-      window.calculateWallArea = calculations.calculateWallArea;
-      window.calculateTotalArea = calculations.calculateTotalArea;
+      // Dynamically import the calculator files only on client side
+      Promise.all([
+        import('./config.js'),
+        import('./calculations.js'),
+        import('./ui.js')
+      ]).then(([config, calculations, ui]) => {
+        // Make config available globally
+        window.MATERIALS = config.MATERIALS;
+        window.PROFILES = config.PROFILES;
+        window.TRIM_MATERIALS = config.TRIM_MATERIALS;
+        
+        // Connect all the REAL functions from your files
+        window.updateMaterialDetails = ui.updateMaterialDetails;
+        window.toggleTrimMaterial = ui.toggleTrimMaterial;
+        window.showModal = ui.showModal;
+        window.closeModal = ui.closeModal;
+        
+        window.generateWalls = calculations.generateWalls;
+        window.calculateResults = calculations.calculateResults;
+        window.calculateWallArea = calculations.calculateWallArea;
+        window.calculateTotalArea = calculations.calculateTotalArea;
+        
+        console.log('Calculator functions loaded successfully');
+      }).catch(error => {
+        console.error('Error loading calculator functions:', error);
+      });
       
       // Navigation functions
       window.nextStep = function(currentStep) {
@@ -188,6 +194,7 @@ export default function CalculatorComponent() {
 
   return (
     <div className="calculator-wrapper">
+      {/* ALL YOUR JSX REMAINS EXACTLY THE SAME - keeping your entire HTML structure */}
       <div className="container">
         <div className="signature-section" style={{ textAlign: 'center', margin: '40px 0 30px 0' }}>
           <h2 style={{ fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 700, letterSpacing: '2px', margin: '0 0 10px 0', textTransform: 'uppercase', color: '#232320' }}>
@@ -197,9 +204,6 @@ export default function CalculatorComponent() {
             Architectural wall systems that redefine modern spaces. Modular, seamless, and crafted to transform any environment.
           </p>
         </div>
-        
-        {/* Rest of your JSX stays exactly the same - I'm not changing any of the HTML structure */}
-        {/* All your steps and forms remain unchanged below this point */}
         
         {/* Enhanced controls */}
         <div style={{ textAlign: 'center', margin: '20px 0' }}>
@@ -298,8 +302,8 @@ export default function CalculatorComponent() {
           </div>
         </div>
         
-        {/* ALL YOUR OTHER STEPS REMAIN EXACTLY THE SAME - Steps 2-6 */}
-        {/* I'm keeping all your HTML/JSX structure unchanged */}
+        {/* ALL YOUR OTHER STEPS (2-6) REMAIN EXACTLY THE SAME */}
+        {/* I'm not repeating them to save space, but they stay unchanged */}
         
         {/* Step 2: Basic Configuration */}
         <div className="step" id="step2">
