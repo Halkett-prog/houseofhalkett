@@ -9,33 +9,58 @@ export default function CalculatorComponent() {
 useEffect(() => {
   // Initialize the calculator when component mounts
   if (typeof window !== 'undefined') {
-    // Make functions available globally
-    window.toggleTrimMaterial = main.toggleTrimMaterial;
-    window.nextStep = main.nextStep;
-    window.previousStep = main.previousStep;
-    window.generateWalls = main.generateWalls;
+    console.log('Setting up calculator functions...');
     
-    // Add the addToCart function
+    // First, load all the functions from your imported files
+    // Make ALL functions available globally that main.js needs
+    window.toggleTrimMaterial = main.toggleTrimMaterial || function() { console.log('toggleTrimMaterial called'); };
+    window.nextStep = main.nextStep || function(step) { console.log('nextStep', step); };
+    window.previousStep = main.previousStep || function(step) { console.log('previousStep', step); };
+    window.generateWalls = main.generateWalls || function() { console.log('generateWalls called'); };
+    window.calculateResults = calculations.calculateResults || function() { console.log('calculateResults called'); };
+    window.saveConfiguration = main.saveConfiguration || function() { console.log('saveConfiguration called'); };
+    window.generatePDF = main.generatePDF || function() { console.log('generatePDF called'); };
+    window.emailSpecification = main.emailSpecification || function() { console.log('emailSpecification called'); };
+    window.showSampleRequest = ui.showSampleRequest || function() { console.log('showSampleRequest called'); };
+    window.closeSampleModal = ui.closeSampleModal || function() { console.log('closeSampleModal called'); };
+    window.closeGallery = ui.closeGallery || function() { console.log('closeGallery called'); };
+    window.closeGalleryOutside = ui.closeGalleryOutside || function(e) { console.log('closeGalleryOutside called'); };
+    window.openGallery = ui.openGallery || function() { console.log('openGallery called'); };
+    window.goToSystemOverview = main.goToSystemOverview || function() { console.log('goToSystemOverview called'); };
+    window.closeRecentModal = ui.closeRecentModal || function() { console.log('closeRecentModal called'); };
+    window.submitSampleRequest = ui.submitSampleRequest || function() { console.log('submitSampleRequest called'); };
+    window.handleCoverageChange = main.handleCoverageChange || function(radio) { console.log('handleCoverageChange called'); };
+    window.updateTrimOptions = ui.updateTrimOptions || function() { console.log('updateTrimOptions called'); };
+    window.updateBoardRecommendation = ui.updateBoardRecommendation || function() { console.log('updateBoardRecommendation called'); };
+    
+    // IMPORTANT: Define addToCart
     window.addToCart = function() {
-      // Get the current configuration from the results
+      console.log('===== ADD TO CART CLICKED =====');
+      alert('Add to Cart was clicked!');
+      
       const config = {
-        // Gather all the form data
-        projectName: document.getElementById('projectName')?.value || 'Untitled Project',
-        material: document.getElementById('material')?.value,
-        profile: document.getElementById('profile')?.value,
-        boardWidth: document.getElementById('boardWidth')?.value,
-        coverage: document.querySelector('input[name="coverage"]:checked')?.value,
-        // Add all other fields you need
-        results: document.getElementById('resultsContainer')?.innerText,
-        cost: document.getElementById('costEstimateContainer')?.innerText
+        test: 'This is a test',
+        timestamp: new Date().toISOString(),
+        projectName: document.getElementById('projectName')?.value || 'Test Project',
       };
       
-      // Save to localStorage
+      console.log('Saving to localStorage:', config);
       localStorage.setItem('pendingCalculatorOrder', JSON.stringify(config));
       
-      // Navigate to cart
+      const saved = localStorage.getItem('pendingCalculatorOrder');
+      console.log('Retrieved from localStorage:', saved);
+      
       window.location.href = '/cart';
     };
+    
+    // Also make projectConfig available globally
+    window.projectConfig = window.projectConfig || {};
+    
+    console.log('All functions registered');
+  }
+}, []);
+ // Add the addToCart function
+
     
     // Add other functions as needed
     window.calculateResults = calculations.calculateResults;
