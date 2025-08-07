@@ -1431,7 +1431,7 @@ textarea:focus {
     box-shadow: none;
     border-bottom: 2px solid #232320;
   }
-  
+}
   .navigation,
   .progress-bar,
   .step-indicators,
