@@ -56,35 +56,74 @@ export default function MaterialsPage() {
         }
       ]
     },
-    egger: {
-      name: 'EGGER Panels',
-      description: 'European engineered wood products',
+    egrdecor: {
+      name: 'EGR Decor',
+      description: 'Premium decorative panels since 1973',
       items: [
         {
-          id: 'egger-001',
-          name: 'EGGER PerfectSense',
-          category: 'Lacquered Board',
-          description: 'Premium lacquered MDF with superior surface quality',
-          price: 225,
-          unit: 'per sheet',
-          size: "4' x 8'",
-          thickness: '19mm',
-          finish: 'High Gloss / Matte',
-          colors: ['Pure White', 'Cashmere', 'Graphite'],
-          image: 'perfectsense-white'
-        },
-        {
-          id: 'egger-002',
-          name: 'EGGER Feelwood',
-          category: 'Synchronized Texture',
-          description: 'Perfectly synchronized wood texture and grain pattern',
-          price: 195,
+          id: 'egr-001',
+          name: 'StyleLite TruMatte',
+          category: 'Fingerprint Resistant',
+          description: 'Premium high-end decorative panel with fingerprint-resistant matte finish. UV protected and sustainable.',
+          price: 285,
           unit: 'per sheet',
           size: "4' x 8'",
           thickness: '18mm',
-          finish: 'Natural Texture',
-          colors: ['Oak Halifax', 'Walnut Charlotte', 'Pine Nordic'],
-          image: 'feelwood-oak'
+          finish: 'TruMatte',
+          colors: ['Arctic White', 'Charcoal', 'Stone Grey', 'Deep Black'],
+          image: 'stylelite-trumatte'
+        },
+        {
+          id: 'egr-002',
+          name: 'StyleLite TruGloss',
+          category: 'High Gloss',
+          description: 'Ultra high-gloss surface with exceptional depth and clarity. Superior to traditional laminates with PUR lamination.',
+          price: 325,
+          unit: 'per sheet',
+          size: "4' x 8'",
+          thickness: '18mm',
+          finish: 'TruGloss',
+          colors: ['Pearl White', 'Midnight Black', 'Platinum', 'Ivory'],
+          image: 'stylelite-trugloss'
+        },
+        {
+          id: 'egr-003',
+          name: 'StyleLex Outdoor',
+          category: 'Weatherproof',
+          description: 'Engineered for covered outdoor entertaining spaces. Weather-resistant HPL laminated to weatherproof composite core.',
+          price: 385,
+          unit: 'per sheet',
+          size: "4' x 8'",
+          thickness: '19mm',
+          finish: 'Weatherable HPL',
+          colors: ['Charcoal', 'Natural Stone', 'Coastal Grey', 'Desert Sand'],
+          image: 'stylelex-outdoor'
+        },
+        {
+          id: 'egr-004',
+          name: 'Lustrolite',
+          category: 'Acrylic Wall Panel',
+          description: 'Award-winning high gloss acrylic wall panel. Perfect alternative to tiles with glass-like appearance. Grout-free and hygienic.',
+          price: 245,
+          unit: 'per sheet',
+          size: "4' x 8'",
+          thickness: '10mm',
+          finish: 'High Gloss Acrylic',
+          colors: ['Diamond White', 'Midnight Black', 'Silver Pearl', 'Ocean Blue'],
+          image: 'lustrolite'
+        },
+        {
+          id: 'egr-005',
+          name: 'Zenolite',
+          category: 'Next-Gen Panel',
+          description: 'Next-generation high gloss wall panels offering superior performance and aesthetics. 10-year warranty included.',
+          price: 195,
+          unit: 'per sheet',
+          size: "4' x 8'",
+          thickness: '8mm',
+          finish: 'Premium Gloss',
+          colors: ['Pure White', 'Classic Grey', 'Soft Beige', 'Carbon Black'],
+          image: 'zenolite'
         }
       ]
     },
@@ -250,7 +289,8 @@ export default function MaterialsPage() {
     <div style={{
       minHeight: '100vh',
       background: '#EFEEE1',
-      fontFamily: "'Roboto Mono', monospace"
+      fontFamily: "'Roboto Mono', monospace",
+      marginTop: '180px'
     }}>
       {/* Notification */}
       {notification && (
@@ -404,10 +444,10 @@ export default function MaterialsPage() {
             REHAU
           </button>
           <button
-            onClick={() => setSelectedCategory('egger')}
+            onClick={() => setSelectedCategory('egrdecor')}
             style={{
-              background: selectedCategory === 'egger' ? '#34499E' : '#fff',
-              color: selectedCategory === 'egger' ? '#fff' : '#232320',
+              background: selectedCategory === 'egrdecor' ? '#34499E' : '#fff',
+              color: selectedCategory === 'egrdecor' ? '#fff' : '#232320',
               border: '2px solid #34499E',
               padding: '12px 24px',
               fontSize: '11px',
@@ -419,7 +459,7 @@ export default function MaterialsPage() {
               transition: 'all 0.2s ease'
             }}
           >
-            EGGER
+            EGR DECOR
           </button>
           <button
             onClick={() => setSelectedCategory('sicis')}
@@ -486,7 +526,7 @@ export default function MaterialsPage() {
               {/* Material Image Placeholder */}
               <div style={{
                 height: '200px',
-                background: `linear-gradient(135deg, #${material.id.includes('rehau') ? '34499E' : material.id.includes('egger') ? 'A1A2A0' : material.id.includes('sicis') ? '232320' : 'B19359'} 0%, #232320 100%)`,
+                background: `linear-gradient(135deg, #${material.id.includes('rehau') ? '34499E' : material.id.includes('egr') ? '232320' : material.id.includes('sicis') ? '666' : 'B19359'} 0%, #232320 100%)`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -526,6 +566,22 @@ export default function MaterialsPage() {
                 }}>
                   ${material.price}
                 </div>
+                {/* ISO Badge for EGR */}
+                {material.id.includes('egr') && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '15px',
+                    left: '15px',
+                    background: '#34499E',
+                    color: '#fff',
+                    padding: '4px 8px',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    letterSpacing: '1px'
+                  }}>
+                    ISO9001
+                  </div>
+                )}
               </div>
 
               {/* Material Info */}
@@ -654,6 +710,266 @@ export default function MaterialsPage() {
             </p>
           </div>
         )}
+
+        {/* Brand Info Sections - Show based on selected category */}
+        
+        {/* EGR Decor Info Section */}
+        {selectedCategory === 'egrdecor' && (
+          <div style={{
+            marginTop: '60px',
+            padding: '40px',
+            background: '#fff',
+            boxShadow: '0 2px 10px rgba(35,35,32,0.08)',
+            textAlign: 'center'
+          }}>
+            <h2 style={{
+              fontSize: '20px',
+              marginBottom: '20px',
+              textTransform: 'uppercase',
+              letterSpacing: '2px',
+              color: '#232320'
+            }}>
+              Why Choose EGR Decor?
+            </h2>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '30px',
+              marginBottom: '30px'
+            }}>
+              <div>
+                <div style={{ fontSize: '36px', marginBottom: '10px', color: '#B19359' }}>🏆</div>
+                <h4 style={{ fontSize: '14px', marginBottom: '5px', letterSpacing: '1px' }}>SINCE 1973</h4>
+                <p style={{ fontSize: '12px', color: '#666' }}>50+ years of manufacturing excellence</p>
+              </div>
+              <div>
+                <div style={{ fontSize: '36px', marginBottom: '10px', color: '#B19359' }}>✓</div>
+                <h4 style={{ fontSize: '14px', marginBottom: '5px', letterSpacing: '1px' }}>ISO9001 CERTIFIED</h4>
+                <p style={{ fontSize: '12px', color: '#666' }}>Quality management certification</p>
+              </div>
+              <div>
+                <div style={{ fontSize: '36px', marginBottom: '10px', color: '#B19359' }}>🌍</div>
+                <h4 style={{ fontSize: '14px', marginBottom: '5px', letterSpacing: '1px' }}>GLOBAL LEADER</h4>
+                <p style={{ fontSize: '12px', color: '#666' }}>Worldwide distribution network</p>
+              </div>
+              <div>
+                <div style={{ fontSize: '36px', marginBottom: '10px', color: '#B19359' }}>♻️</div>
+                <h4 style={{ fontSize: '14px', marginBottom: '5px', letterSpacing: '1px' }}>SUSTAINABLE</h4>
+                <p style={{ fontSize: '12px', color: '#666' }}>Eco-friendly, recyclable materials</p>
+              </div>
+            </div>
+            <p style={{
+              fontSize: '13px',
+              color: '#666',
+              lineHeight: '1.6',
+              maxWidth: '700px',
+              margin: '0 auto'
+            }}>
+              EGR Decor specializes in polymer-based decorative panels with advanced coating technologies. 
+              Their PUR lamination facility ensures ripple-free finishes with exceptional durability.
+            </p>
+          </div>
+        )}
+
+        {/* REHAU Info Section */}
+        {selectedCategory === 'rehau' && (
+          <div style={{
+            marginTop: '60px',
+            padding: '40px',
+            background: '#fff',
+            boxShadow: '0 2px 10px rgba(35,35,32,0.08)',
+            textAlign: 'center'
+          }}>
+            <h2 style={{
+              fontSize: '20px',
+              marginBottom: '20px',
+              textTransform: 'uppercase',
+              letterSpacing: '2px',
+              color: '#232320'
+            }}>
+              Why Choose REHAU Surfaces?
+            </h2>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '30px',
+              marginBottom: '30px'
+            }}>
+              <div>
+                <div style={{ fontSize: '36px', marginBottom: '10px', color: '#34499E' }}>🏅</div>
+                <h4 style={{ fontSize: '14px', marginBottom: '5px', letterSpacing: '1px' }}>AWARD WINNING</h4>
+                <p style={{ fontSize: '12px', color: '#666' }}>Multiple design awards including Red Dot</p>
+              </div>
+              <div>
+                <div style={{ fontSize: '36px', marginBottom: '10px', color: '#34499E' }}>🛡️</div>
+                <h4 style={{ fontSize: '14px', marginBottom: '5px', letterSpacing: '1px' }}>20-YEAR UV STABILITY</h4>
+                <p style={{ fontSize: '12px', color: '#666' }}>Proven indoor UV resistance</p>
+              </div>
+              <div>
+                <div style={{ fontSize: '36px', marginBottom: '10px', color: '#34499E' }}>🔬</div>
+                <h4 style={{ fontSize: '14px', marginBottom: '5px', letterSpacing: '1px' }}>GERMAN ENGINEERING</h4>
+                <p style={{ fontSize: '12px', color: '#666' }}>Precision manufacturing standards</p>
+              </div>
+              <div>
+                <div style={{ fontSize: '36px', marginBottom: '10px', color: '#34499E' }}>🌲</div>
+                <h4 style={{ fontSize: '14px', marginBottom: '5px', letterSpacing: '1px' }}>PEFC CERTIFIED</h4>
+                <p style={{ fontSize: '12px', color: '#666' }}>Sustainable forestry compliant</p>
+              </div>
+            </div>
+            <p style={{
+              fontSize: '13px',
+              color: '#666',
+              lineHeight: '1.6',
+              maxWidth: '700px',
+              margin: '0 auto'
+            }}>
+              REHAU's RAUVISIO surfaces combine minimalist design with extreme durability. Crystal provides 
+              glass-like aesthetics at 50% lighter weight and 10x more break resistance than real glass.
+            </p>
+          </div>
+        )}
+
+        {/* SICIS Info Section */}
+        {selectedCategory === 'sicis' && (
+          <div style={{
+            marginTop: '60px',
+            padding: '40px',
+            background: '#fff',
+            boxShadow: '0 2px 10px rgba(35,35,32,0.08)',
+            textAlign: 'center'
+          }}>
+            <h2 style={{
+              fontSize: '20px',
+              marginBottom: '20px',
+              textTransform: 'uppercase',
+              letterSpacing: '2px',
+              color: '#232320'
+            }}>
+              Why Choose SICIS Glass?
+            </h2>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '30px',
+              marginBottom: '30px'
+            }}>
+              <div>
+                <div style={{ fontSize: '36px', marginBottom: '10px', color: '#666' }}>🇮🇹</div>
+                <h4 style={{ fontSize: '14px', marginBottom: '5px', letterSpacing: '1px' }}>100% ITALIAN MADE</h4>
+                <p style={{ fontSize: '12px', color: '#666' }}>Authentic Italian craftsmanship</p>
+              </div>
+              <div>
+                <div style={{ fontSize: '36px', marginBottom: '10px', color: '#666' }}>💎</div>
+                <h4 style={{ fontSize: '14px', marginBottom: '5px', letterSpacing: '1px' }}>LUXURY MATERIALS</h4>
+                <p style={{ fontSize: '12px', color: '#666' }}>Premium glass with polymers & metals</p>
+              </div>
+              <div>
+                <div style={{ fontSize: '36px', marginBottom: '10px', color: '#666' }}>✨</div>
+                <h4 style={{ fontSize: '14px', marginBottom: '5px', letterSpacing: '1px' }}>CUSTOM OPTIONS</h4>
+                <p style={{ fontSize: '12px', color: '#666' }}>Personalized patterns & backlighting</p>
+              </div>
+              <div>
+                <div style={{ fontSize: '36px', marginBottom: '10px', color: '#666' }}>🎨</div>
+                <h4 style={{ fontSize: '14px', marginBottom: '5px', letterSpacing: '1px' }}>ARTISTIC HERITAGE</h4>
+                <p style={{ fontSize: '12px', color: '#666' }}>Mosaic tradition meets innovation</p>
+              </div>
+            </div>
+            <p style={{
+              fontSize: '13px',
+              color: '#666',
+              lineHeight: '1.6',
+              maxWidth: '700px',
+              margin: '0 auto'
+            }}>
+              SICIS Vetrite combines traditional Italian craftsmanship with modern technology. Glass slabs 
+              fused with special polymers and metals create surfaces suitable for interiors, exteriors, and furniture.
+            </p>
+          </div>
+        )}
+
+        {/* HALKETT Flow Info Section */}
+        {selectedCategory === 'halkett' && (
+          <div style={{
+            marginTop: '60px',
+            padding: '40px',
+            background: 'linear-gradient(135deg, #232320 0%, #3a3a37 100%)',
+            color: '#EFEEE1',
+            textAlign: 'center'
+          }}>
+            <h2 style={{
+              fontSize: '20px',
+              marginBottom: '20px',
+              textTransform: 'uppercase',
+              letterSpacing: '2px',
+              color: '#B19359'
+            }}>
+              HALKETT Flow System™
+            </h2>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '30px',
+              marginBottom: '30px'
+            }}>
+              <div>
+                <div style={{ fontSize: '36px', marginBottom: '10px', color: '#B19359' }}>⚡</div>
+                <h4 style={{ fontSize: '14px', marginBottom: '5px', letterSpacing: '1px', color: '#EFEEE1' }}>PROPRIETARY SYSTEM</h4>
+                <p style={{ fontSize: '12px', color: '#A1A2A0' }}>Exclusive HALKETT innovation</p>
+              </div>
+              <div>
+                <div style={{ fontSize: '36px', marginBottom: '10px', color: '#B19359' }}>🔧</div>
+                <h4 style={{ fontSize: '14px', marginBottom: '5px', letterSpacing: '1px', color: '#EFEEE1' }}>METAL OVER MDF</h4>
+                <p style={{ fontSize: '12px', color: '#A1A2A0' }}>Solid metal sheets on premium core</p>
+              </div>
+              <div>
+                <div style={{ fontSize: '36px', marginBottom: '10px', color: '#B19359' }}>🎯</div>
+                <h4 style={{ fontSize: '14px', marginBottom: '5px', letterSpacing: '1px', color: '#EFEEE1' }}>CUSTOM CRAFTED</h4>
+                <p style={{ fontSize: '12px', color: '#A1A2A0' }}>Made to your specifications</p>
+              </div>
+              <div>
+                <div style={{ fontSize: '36px', marginBottom: '10px', color: '#B19359' }}>🏗️</div>
+                <h4 style={{ fontSize: '14px', marginBottom: '5px', letterSpacing: '1px', color: '#EFEEE1' }}>ARCHITECTURAL GRADE</h4>
+                <p style={{ fontSize: '12px', color: '#A1A2A0' }}>Commercial & residential approved</p>
+              </div>
+            </div>
+            <p style={{
+              fontSize: '13px',
+              color: '#A1A2A0',
+              lineHeight: '1.6',
+              maxWidth: '700px',
+              margin: '0 auto'
+            }}>
+              The HALKETT Flow System represents the pinnacle of metal-clad panel technology. Each panel 
+              features genuine metal surfaces that develop unique patinas over time, creating living finishes that evolve.
+            </p>
+            <button
+              onClick={() => alert('Full Flow System catalog coming soon. Call 215.721.9331 for details.')}
+              style={{
+                marginTop: '20px',
+                padding: '12px 30px',
+                background: 'transparent',
+                border: '2px solid #B19359',
+                color: '#B19359',
+                fontSize: '12px',
+                letterSpacing: '2px',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                fontWeight: 700,
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = '#B19359';
+                e.target.style.color = '#232320';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'transparent';
+                e.target.style.color = '#B19359';
+              }}
+            >
+              Learn More
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Material Detail Modal */}
@@ -728,7 +1044,7 @@ export default function MaterialsPage() {
             {/* Material Image */}
             <div style={{
               height: '250px',
-              background: `linear-gradient(135deg, #${selectedMaterial.id.includes('flow') ? 'B19359' : '34499E'} 0%, #232320 100%)`,
+              background: `linear-gradient(135deg, #${selectedMaterial.id.includes('flow') ? 'B19359' : selectedMaterial.id.includes('egr') ? '232320' : '34499E'} 0%, #232320 100%)`,
               marginBottom: '30px',
               display: 'flex',
               alignItems: 'center',

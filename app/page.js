@@ -1,6 +1,7 @@
 export default function Home() {
   return (
     <main style={{ 
+      marginTop: '180px',  // Fixes header overlap
       paddingBottom: '100px',
       fontFamily: "'Roboto Mono', monospace",
       background: '#EFEEE1'
@@ -26,7 +27,6 @@ export default function Home() {
         <p style={{ 
           fontSize: '16px',
           opacity: 0.9,
-          marginBottom: '40px',
           letterSpacing: '0.5px',
           maxWidth: '600px',
           margin: '0 auto 40px'
@@ -45,7 +45,7 @@ export default function Home() {
           <a href="/calculator" className="btn">
             📐 START WALL CALCULATOR
           </a>
-          <a href="/materials" className="btn-secondary">
+          <a href="/materials" className="btn">
             🎨 BROWSE MATERIALS
           </a>
         </div>
@@ -62,7 +62,7 @@ export default function Home() {
           <div className="stat-card">
             <div className="stat-number">📐</div>
             <h3 className="stat-label">CALCULATE</h3>
-            <p style={{
+            <p style={{ 
               fontSize: '14px',
               color: '#666',
               lineHeight: '1.6',
@@ -72,86 +72,105 @@ export default function Home() {
               Instant pricing for your custom wall system
             </p>
           </div>
-          
-          {/* Customize Card */}
+
+          {/* Materials Card */}
           <div className="stat-card">
             <div className="stat-number">🎨</div>
-            <h3 className="stat-label">CUSTOMIZE</h3>
-            <p style={{
+            <h3 className="stat-label">MATERIALS</h3>
+            <p style={{ 
               fontSize: '14px',
               color: '#666',
               lineHeight: '1.6',
               letterSpacing: '0.15px',
               marginTop: '10px'
             }}>
-              Choose from premium materials and finishes
+              Premium wood, leather, glass and metal finishes
             </p>
           </div>
-          
-          {/* Deliver Card */}
-          <div className="stat-card">
-            <div className="stat-number">📦</div>
-            <h3 className="stat-label">DELIVER</h3>
-            <p style={{
-              fontSize: '14px',
-              color: '#666',
-              lineHeight: '1.6',
-              letterSpacing: '0.15px',
-              marginTop: '10px'
-            }}>
-              Complete system ready for installation
-            </p>
-          </div>
-        </div>
 
-        {/* About Section */}
-        <div style={{
-          background: '#232320',
-          color: '#EFEEE1',
-          padding: '60px 40px',
-          marginTop: '60px',
-          textAlign: 'center'
-        }}>
-          <h2 style={{
-            fontSize: 'clamp(20px, 3vw, 28px)',
-            marginBottom: '20px',
-            letterSpacing: '2.2px',
-            textTransform: 'uppercase',
-            fontWeight: 700,
-            color: '#B19359'
-          }}>
-            THE ART OF WALLS
-          </h2>
-          <p style={{
-            fontSize: '16px',
-            lineHeight: '1.8',
-            maxWidth: '800px',
-            margin: '0 auto 30px',
-            letterSpacing: '0.15px'
-          }}>
-            HALKETT specializes in creating architectural wall systems that transform spaces. 
-            Our modular board system combines traditional craftsmanship with modern precision, 
-            delivering luxury finishes that define contemporary interiors.
-          </p>
-          <div style={{
-            fontSize: '24px',
-            fontWeight: 700,
-            color: '#B19359',
-            letterSpacing: '1px'
-          }}>
-            215.721.9331
+          {/* Custom Card */}
+          <div className="stat-card">
+            <div className="stat-number">✨</div>
+            <h3 className="stat-label">CUSTOM</h3>
+            <p style={{ 
+              fontSize: '14px',
+              color: '#666',
+              lineHeight: '1.6',
+              letterSpacing: '0.15px',
+              marginTop: '10px'
+            }}>
+              Tailored solutions for unique spaces
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Sticky Bottom Nav for Mobile */}
-      <div className="bottom-nav">
-        <a href="/calculator" className="btn" style={{ flex: 1 }}>
-          CALCULATOR
-        </a>
-        <a href="/cart" className="btn-secondary" style={{ flex: 1 }}>
-          CART
-        </a>
+      {/* About Section */}
+      <div style={{
+        maxWidth: '800px',
+        margin: '80px auto',
+        padding: '0 20px',
+        textAlign: 'center'
+      }}>
+        <h2 style={{
+          fontSize: 'clamp(24px, 4vw, 32px)',
+          marginBottom: '20px',
+          letterSpacing: '2px',
+          textTransform: 'uppercase',
+          color: '#232320'
+        }}>
+          The Art of Walls
+        </h2>
+        <p style={{
+          fontSize: '16px',
+          lineHeight: '1.8',
+          color: '#666',
+          letterSpacing: '0.3px'
+        }}>
+          HALKETT creates architectural wall systems that redefine modern spaces. 
+          Our modular approach combines precision engineering with luxury materials, 
+          delivering seamless installations that transform any environment.
+        </p>
+      </div>
+
+      {/* Contact Section */}
+      <div style={{
+        background: '#232320',
+        color: '#EFEEE1',
+        padding: '60px 20px',
+        textAlign: 'center',
+        marginTop: '80px'
+      }}>
+        <h2 style={{
+          fontSize: 'clamp(24px, 4vw, 32px)',
+          marginBottom: '20px',
+          letterSpacing: '2px',
+          textTransform: 'uppercase'
+        }}>
+          Start Your Project
+        </h2>
+        <p style={{
+          fontSize: '16px',
+          opacity: 0.9,
+          marginBottom: '30px',
+          maxWidth: '600px',
+          margin: '0 auto 30px'
+        }}>
+          Ready to transform your space? Calculate your custom wall system or browse our premium materials.
+        </p>
+        <div style={{
+          display: 'flex',
+          gap: '20px',
+          justifyContent: 'center',
+          flexWrap: 'wrap'
+        }}>
+          <a href="/calculator" className="btn" style={{ background: '#B19359', border: 'none' }}>
+            Start Calculator
+          </a>
+          <a href="tel:2157219331" className="btn" style={{ background: 'transparent', border: '2px solid #B19359' }}>
+            Call 215.721.9331
+          </a>
+        </div>
       </div>
     </main>
   );

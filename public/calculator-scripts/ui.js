@@ -1,40 +1,11 @@
 // HALKETT Calculator - UI Functions v60
-// HALKETT Calculator - UI Functions v60
 
 // Check for global variables and use them if available
 if (typeof projectConfig === 'undefined') {
     var projectConfig = {};
 }
-if (typeof globalSpecification === 'undefined') {
-    var globalSpecification = '';
-}
-if (typeof globalCostEstimate === 'undefined') {
-    var globalCostEstimate = null;
-}
-if (typeof globalWallDetails === 'undefined') {
-    var globalWallDetails = [];
-}
-if (typeof recentConfigurations === 'undefined') {
-    var recentConfigurations = [];
-}
+// ... other global checks ...
 
-// All your existing functions stay exactly the same...
-// (Copy all the functions from your file starting from the debounce function)
-
-// Debounce function
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-// ... rest of your ui.js file exactly as it is ...
 // Debounce function
 function debounce(func, wait) {
     let timeout;
@@ -51,6 +22,8 @@ function debounce(func, wait) {
 // Enhanced notification system
 function showNotification(message, type = 'success') {
     const notification = document.getElementById('notification');
+    if (!notification) return;
+    
     const notificationText = document.getElementById('notificationText');
     const notificationIcon = document.getElementById('notificationIcon');
     
@@ -70,8 +43,8 @@ function showNotification(message, type = 'success') {
             break;
     }
     
-    notificationIcon.innerHTML = iconSVG;
-    notificationText.textContent = message;
+    if (notificationIcon) notificationIcon.innerHTML = iconSVG;
+    if (notificationText) notificationText.textContent = message;
     notification.className = `notification ${type} show`;
     
     if (notification.hideTimeout) {
@@ -166,7 +139,7 @@ function updateAllDisplayedUnits() {
     });
 }
 
-// Material details handling
+// Material details handling - ONLY DECLARE ONCE
 let materialDetailsListeners = [];
 
 function updateMaterialDetails() {
@@ -180,7 +153,7 @@ function updateMaterialDetails() {
     materialDetailsListeners.forEach(({ element, event, handler }) => {
         element.removeEventListener(event, handler);
     });
-    materialDetailsListeners = [];
+    materialDetailsListeners = []; // Clear the array, don't redeclare it
     
     let html = '<div class="form-group">';
     switch(material) {
@@ -444,6 +417,7 @@ function liveCalculateWall(wallNumber) {
 // Gallery Modal Functions
 function openGallery() {
     const modal = document.getElementById('galleryModal');
+    if (!modal) return;
     modal.style.display = 'flex';
     setTimeout(() => {
         modal.classList.add('active');
@@ -453,6 +427,7 @@ function openGallery() {
 
 function closeGallery() {
     const modal = document.getElementById('galleryModal');
+    if (!modal) return;
     modal.classList.remove('active');
     setTimeout(() => {
         modal.style.display = 'none';
@@ -469,18 +444,21 @@ function closeGalleryOutside(event) {
 // Material sample request modal
 function showSampleRequest() {
     const modal = document.getElementById('sampleModal');
+    if (!modal) return;
     modal.style.display = 'flex';
     setTimeout(() => modal.classList.add('active'), 10);
 }
 
 function closeSampleModal() {
     const modal = document.getElementById('sampleModal');
+    if (!modal) return;
     modal.classList.remove('active');
     setTimeout(() => modal.style.display = 'none', 300);
 }
 
 function submitSampleRequest() {
     const form = document.getElementById('sampleForm');
+    if (!form) return;
     const formData = new FormData(form);
     
     // In real implementation, this would send to server
@@ -493,7 +471,7 @@ function submitSampleRequest() {
         notes: formData.get('notes'),
         configuration: {
             project: projectConfig,
-            specification: globalSpecification
+            specification: typeof globalSpecification !== 'undefined' ? globalSpecification : {}
         }
     };
     
@@ -522,6 +500,10 @@ function showRecentConfigurations() {
     const modal = document.getElementById('recentModal');
     const list = document.getElementById('recentList');
     
+    if (!modal || !list) return;
+    
+    const recentConfigurations = JSON.parse(localStorage.getItem('recentConfigurations') || '[]');
+    
     if (recentConfigurations.length === 0) {
         list.innerHTML = '<div class="recent-item">No recent configurations found</div>';
     } else {
@@ -541,11 +523,13 @@ function showRecentConfigurations() {
 
 function closeRecentModal() {
     const modal = document.getElementById('recentModal');
+    if (!modal) return;
     modal.classList.remove('active');
     setTimeout(() => modal.style.display = 'none', 300);
 }
 
 function loadRecentConfig(id) {
+    const recentConfigurations = JSON.parse(localStorage.getItem('recentConfigurations') || '[]');
     const recent = recentConfigurations.find(r => r.id === id);
     if (recent) {
         if (typeof restoreConfiguration === 'function') {
@@ -558,10 +542,14 @@ function loadRecentConfig(id) {
 
 // Display cost estimate
 function displayCostEstimate() {
+    if (typeof calculateCosts !== 'function') return;
+    
     const costs = calculateCosts();
     if (!costs) return;
     
-    globalCostEstimate = costs;
+    if (typeof globalCostEstimate !== 'undefined') {
+        globalCostEstimate = costs;
+    }
     
     const costHTML = `
         <div class="cost-estimate">
@@ -632,12 +620,12 @@ function displayCostEstimate() {
             </div>
             <div id="costBreakdown" style="display: none;">
                 <h4>Detailed Cost Breakdown</h4>
-                ${Object.entries(costs.breakdown).map(([item, cost]) => `
+                ${costs.breakdown ? Object.entries(costs.breakdown).map(([item, cost]) => `
                     <div class="cost-line small">
                         <span>${item}</span>
                         <span>$${cost.toFixed(2)}</span>
                     </div>
-                `).join('')}
+                `).join('') : ''}
             </div>
         </div>
     `;
@@ -657,6 +645,8 @@ function toggleCostBreakdown() {
 
 // Display installation time estimate
 function displayInstallationTime() {
+    if (typeof calculateInstallationTime !== 'function') return;
+    
     const timeEstimate = calculateInstallationTime();
     if (!timeEstimate) return;
     
@@ -675,12 +665,12 @@ function displayInstallationTime() {
             </div>
             <div class="time-breakdown">
                 <h4>Time Breakdown</h4>
-                ${Object.entries(timeEstimate.breakdown).map(([task, hours]) => `
+                ${timeEstimate.breakdown ? Object.entries(timeEstimate.breakdown).map(([task, hours]) => `
                     <div class="time-line">
                         <span>${task}</span>
                         <span>${hours.toFixed(1)} hours</span>
                     </div>
-                `).join('')}
+                `).join('') : ''}
             </div>
             <p class="time-note">* Based on professional installation by experienced crew</p>
         </div>
