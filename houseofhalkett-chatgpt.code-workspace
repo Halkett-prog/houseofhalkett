@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"name": "houseofhalkett",
+			"path": "."
+		},
+		{
+			"path": "../houseofhalkett-chatgpt"
+		}
+	],
+	"settings": {}
+}

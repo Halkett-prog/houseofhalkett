@@ -1,5 +1,59 @@
 // HALKETT Calculator - Main Application v60
 
+// Update gap validation and preview
+function updateGapValidation() {
+    // Check if elements exist (they won't on steps 1-3)
+    const ceilingGapInput = document.getElementById('ceilingGap');
+    const floorGapInput = document.getElementById('floorGap');
+    
+    if (!ceilingGapInput || !floorGapInput) {
+        return; // Exit if elements don't exist yet
+    }
+    
+    const ceilingGap = parseFloat(ceilingGapInput.value) || 1.5;
+    const floorGap = parseFloat(floorGapInput.value) || 0;
+    const wallHeight = projectConfig.wallHeight;
+    const coverageType = projectConfig.coverageType;
+    
+    // Store in project config
+    projectConfig.customCeilingGap = ceilingGap;
+    projectConfig.customFloorGap = floorGap;
+    
+    // Show/hide warning for non-standard gaps
+    const warningDiv = document.getElementById('nonStandardGapWarning');
+    if (warningDiv) {
+        if (ceilingGap > 3 || floorGap > 3) {
+            warningDiv.style.display = 'block';
+        } else {
+            warningDiv.style.display = 'none';
+        }
+    }
+    
+    // Calculate and show effective coverage
+    if (coverageType === 'full' && wallHeight) {
+        const effectiveCoverage = wallHeight - ceilingGap - floorGap;
+        const previewDiv = document.getElementById('coveragePreview');
+        const coverageSpan = document.getElementById('effectiveCoverage');
+        const warningSpan = document.getElementById('gapWarning');
+        
+        if (previewDiv && coverageSpan && warningSpan) {
+            previewDiv.style.display = 'block';
+            coverageSpan.textContent = `${effectiveCoverage}" of ${wallHeight}" wall`;
+            
+            // Check if selected board can cover with these gaps
+            const boardLength = projectConfig.boardLength || parseInt(document.getElementById('boardLength')?.value) || 96;
+            if (boardLength < effectiveCoverage) {
+                warningSpan.textContent = `⚠️ Selected ${boardLength}" board is too short. Need at least ${Math.ceil(effectiveCoverage)}" board.`;
+                warningSpan.style.color = '#DC3545';
+            } else {
+                const extraSpace = boardLength - effectiveCoverage;
+                warningSpan.textContent = `✓ Selected ${boardLength}" board works perfectly (${extraSpace.toFixed(1)}" extra for cutting).`;
+                warningSpan.style.color = '#28A745';
+            }
+        }
+    }
+}
+
 // Step validation
 function validateStep(step) {
     switch(step) {
@@ -57,56 +111,117 @@ function validateStep(step) {
             updateBoardRecommendation();
             return true;
             
-        case 3:
-            // Step 3: Design Selection (Profile & Board System)
-            const boardLength = document.getElementById('boardLength').value;
-            if (!boardLength) {
-                showNotification('Please select a modular board system size', 'error');
+// Replace case 3 in validateStep with this updated version:
+
+case 3:
+    // Step 3: Design Selection
+    const selectedBoardLength = parseInt(document.getElementById('boardLength').value);
+    const configuredWallHeight = projectConfig.wallHeight;
+    const selectedCoverageType = projectConfig.coverageType;
+    
+    if (!selectedBoardLength) {
+        showNotification('Please select a modular board system size', 'error');
+        document.getElementById('boardLength').focus();
+        return false;
+    }
+    
+    const profile = document.querySelector('input[name="profile"]:checked');
+    if (!profile) {
+        showNotification('Please select a profile style', 'error');
+        return false;
+    }
+    
+    // For full height coverage, check with standard gaps first
+    if (selectedCoverageType === 'full') {
+        // Use standard gap of 1.5" for initial check
+        const standardGap = 1.5;
+        const effectiveWallHeight = configuredWallHeight - standardGap;
+        
+        if (selectedBoardLength < effectiveWallHeight) {
+            // Check if this is the maximum board length available
+            if (selectedBoardLength === 144) {
+                // Show warning but don't block - they might adjust gaps in Step 4
+                showNotification(`Your wall height (${configuredWallHeight}") exceeds our maximum board length (144") with standard gaps. You can adjust installation gaps in the next step or contact us for a custom quote.`, 'warning');
+                // Store a flag to re-check in Step 4
+                projectConfig.needsGapAdjustment = true;
+            } else {
+                // For non-maximum boards, still block since they can select a longer board
+                showNotification(`Board length (${selectedBoardLength}") is too short for your wall height (${configuredWallHeight}"). Please select a longer board or use wainscot coverage.`, 'error');
                 document.getElementById('boardLength').focus();
+                highlightError('boardLength');
                 return false;
             }
+        } else {
+            projectConfig.needsGapAdjustment = false;
+        }
+    }
+    
+    // For wainscot, board length must be >= coverage height
+    if (selectedCoverageType === 'partial') {
+        const wainscotHeight = projectConfig.coverageHeight;
+        if (selectedBoardLength < wainscotHeight) {
+            showNotification(`Board length (${selectedBoardLength}") is too short for your wainscot height (${wainscotHeight}"). Please select a longer board.`, 'error');
+            document.getElementById('boardLength').focus();
+            highlightError('boardLength');
+            return false;
+        }
+    }
+    
+    // Store the selected values
+    projectConfig.boardLength = selectedBoardLength;
+    projectConfig.boardStyle = profile.value;
+    
+    // Handle cap rail selection if wainscot
+    if (projectConfig.coverageType === 'partial') {
+        const capSelection = document.querySelector('input[name="capProfile"]:checked')?.value;
+        if (!capSelection) {
+            showNotification('Please select a cap rail profile', 'error');
+            return false;
+        }
+        
+        if (capSelection === '1.75') {
+            projectConfig.capWidth = '1.75';
+            projectConfig.capEdge = 'standard';
+        } else if (capSelection === '2.5-square') {
+            projectConfig.capWidth = '2.5';
+            projectConfig.capEdge = 'square';
+        } else if (capSelection === '2.5-beveled') {
+            projectConfig.capWidth = '2.5';
+            projectConfig.capEdge = 'beveled';
+        } else if (capSelection === '2.5-bullnose') {
+            projectConfig.capWidth = '2.5';
+            projectConfig.capEdge = 'bullnose';
+        }
+    }
+    
+    return true;
             
-            const profile = document.querySelector('input[name="profile"]:checked');
-            if (!profile) {
-                showNotification('Please select a profile style', 'error');
-                return false;
-            }
-            
-            projectConfig.boardLength = parseInt(boardLength);
-            projectConfig.boardStyle = profile.value;
-            
-            // Handle cap rail selection if wainscot
-            if (projectConfig.coverageType === 'partial') {
-                const capSelection = document.querySelector('input[name="capProfile"]:checked')?.value;
-                if (!capSelection) {
-                    showNotification('Please select a cap rail profile', 'error');
-                    return false;
-                }
-                
-                if (capSelection === '1.75') {
-                    projectConfig.capWidth = '1.75';
-                    projectConfig.capEdge = 'standard';
-                } else if (capSelection === '2.5-square') {
-                    projectConfig.capWidth = '2.5';
-                    projectConfig.capEdge = 'square';
-                } else if (capSelection === '2.5-beveled') {
-                    projectConfig.capWidth = '2.5';
-                    projectConfig.capEdge = 'beveled';
-                } else if (capSelection === '2.5-bullnose') {
-                    projectConfig.capWidth = '2.5';
-                    projectConfig.capEdge = 'bullnose';
-                }
-            }
-            
-            return true;
-            
-        case 4:
-            // Step 4: Materials & Finishes
-            const boardMaterial = document.querySelector('input[name="material"]:checked');
-            if (!boardMaterial) {
-                showNotification('Please select a board material', 'error');
-                return false;
-            }
+case 4:
+    // Step 4: Materials & Finishes
+    // Update gaps when validating this step
+    updateGapValidation();
+    
+    // Re-check board length with custom gaps if needed
+    if (projectConfig.needsGapAdjustment && projectConfig.coverageType === 'full') {
+        const customCeilingGap = projectConfig.customCeilingGap || 1.5;
+        const customFloorGap = projectConfig.customFloorGap || 0;
+        const totalGap = customCeilingGap + customFloorGap;
+        const effectiveWallHeight = projectConfig.wallHeight - totalGap;
+        
+        if (projectConfig.boardLength < effectiveWallHeight) {
+            showNotification(`Even with ${totalGap.toFixed(1)}" total gaps, your ${projectConfig.boardLength}" board is too short for your ${projectConfig.wallHeight}" wall. You need at least ${Math.ceil(effectiveWallHeight)}" of coverage. Please increase gaps, go back to select a different board, or contact us for a custom quote.`, 'error');
+            // Focus on ceiling gap input to encourage adjustment
+            document.getElementById('ceilingGap')?.focus();
+            return false;
+        }
+    }
+    
+    // Rest of the existing case 4 validation continues below...
+    const boardMaterial = document.querySelector('input[name="material"]:checked');
+    if (!boardMaterial) {
+        showNotification('Please select a board material', 'error');
+        return false;
+    }
             
             const material = boardMaterial.value;
             projectConfig.boardMaterial = material;
@@ -429,7 +544,7 @@ function generateSpecification() {
             <pre>${spec}</pre>
         </div>
     `;
-}// main.js continued...
+}
 
 // Get material description
 function getMaterialDescription() {
@@ -845,6 +960,7 @@ window.calculateAll = calculateAll;
 window.validateStep = validateStep;
 window.updateTrimOptions = updateTrimOptions;
 window.toggleTrimMaterial = toggleTrimMaterial;
+window.updateGapValidation = updateGapValidation;
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', () => {
@@ -945,6 +1061,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateBoardRecommendation();
     }
 });
+
 // Add to Cart function for House of HALKETT integration
 function addToCart() {
   console.log('Add to Cart clicked!');
@@ -966,7 +1083,7 @@ function addToCart() {
     boardLength: projectConfig.boardLength || '48',
     wallCount: projectConfig.wallCount || 1,
     walls: projectConfig.walls || [],
-estimatedCost: projectConfig.estimatedCost || 5000,
+    estimatedCost: projectConfig.estimatedCost || 5000,
     timestamp: new Date().toISOString()
   };
   
@@ -993,7 +1110,7 @@ estimatedCost: projectConfig.estimatedCost || 5000,
       window.location.href = 'https://www.houseofhalkett.com/cart';
     }
   }, 1500);
-}  // <-- THIS WAS MISSING! Closes the addToCart function
+}
 
 // Make function globally available
 window.addToCart = addToCart;

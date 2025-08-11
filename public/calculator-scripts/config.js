@@ -1,7 +1,7 @@
 // HALKETT Calculator Configuration v60
-// This file contains all constants and pricing configuration
+// FIXED VERSION: Working Vercel configuration with safe variable declarations
 
-// Only declare if not already defined by the component
+// Only declare if not already defined by the component - EXACT VERCEL PATTERN
 if (typeof CLEARANCE === 'undefined') {
     var CLEARANCE = 0.25;
 }
@@ -86,7 +86,7 @@ if (typeof window !== 'undefined') {
     });
 }
 
-// Only create projectConfig if it doesn't exist
+// Only create projectConfig if it doesn't exist - EXACT VERCEL PATTERN
 if (typeof projectConfig === 'undefined') {
     var projectConfig = {
         coverageType: 'full',
@@ -112,11 +112,15 @@ if (typeof projectConfig === 'undefined') {
         capEdge: 'square',
         currentStep: 1,
         projectName: '',
-        useMetric: false
+        useMetric: false,
+        // Custom gap properties for reorganized version
+        customCeilingGap: 1.5,
+        customFloorGap: 0,
+        maxGapAllowed: 6
     };
 }
 
-// Global variables - check if they exist first
+// Global variables - check if they exist first - EXACT VERCEL PATTERN
 if (typeof globalWallDetails === 'undefined') {
     var globalWallDetails = [];
 }
@@ -165,4 +169,88 @@ if (typeof MATERIAL_NAMES === 'undefined') {
     };
 }
 
-// NO EXPORT STATEMENTS - remove any if they exist
+// Function to get board dimensions including structural requirements
+function getBoardDimensions(width) {
+    const nominal = width;
+    const actual = nominal - CLEARANCE;
+    const visible = actual - (2 * CLEARANCE);
+    const p1Structural = nominal;
+    const p2Structural = nominal + CLEARANCE;
+    
+    return {
+        nominal,
+        actual,
+        visible,
+        p1Structural,
+        p2Structural
+    };
+}
+
+// Function to save configuration
+function saveProgress() {
+    try {
+        localStorage.setItem('halkettProgress', JSON.stringify({
+            projectConfig,
+            globalWallDetails,
+            timestamp: new Date().toISOString()
+        }));
+        console.log('Progress saved');
+    } catch (e) {
+        console.error('Error saving progress:', e);
+    }
+}
+
+// Function to load saved configuration
+function loadProgress() {
+    try {
+        const saved = localStorage.getItem('halkettProgress');
+        if (saved) {
+            const data = JSON.parse(saved);
+            projectConfig = { ...projectConfig, ...data.projectConfig };
+            globalWallDetails = data.globalWallDetails || [];
+            console.log('Progress loaded from', data.timestamp);
+            return true;
+        }
+    } catch (e) {
+        console.error('Error loading progress:', e);
+    }
+    return false;
+}
+
+// Recent configurations management
+function loadRecentConfigurations() {
+    try {
+        const stored = localStorage.getItem('halkettRecentConfigs');
+        if (stored) {
+            recentConfigurations = JSON.parse(stored);
+        }
+    } catch (e) {
+        console.error('Error loading recent configurations:', e);
+    }
+}
+
+function saveToRecentConfigurations() {
+    const config = {
+        projectName: projectConfig.projectName,
+        timestamp: new Date().toISOString(),
+        wallHeight: projectConfig.wallHeight,
+        boardLength: projectConfig.boardLength,
+        material: projectConfig.boardMaterial,
+        wallCount: globalWallDetails.length,
+        totalCost: globalCostEstimate?.total || 0
+    };
+    
+    recentConfigurations.unshift(config);
+    recentConfigurations = recentConfigurations.slice(0, 10); // Keep only last 10
+    
+    try {
+        localStorage.setItem('halkettRecentConfigs', JSON.stringify(recentConfigurations));
+    } catch (e) {
+        console.error('Error saving recent configurations:', e);
+    }
+}
+
+// Initialize recent configurations on load
+loadRecentConfigurations();
+
+// NO EXPORT STATEMENTS - EXACT VERCEL PATTERN (uses global scope)

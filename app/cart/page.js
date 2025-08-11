@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 export default function CartPage() {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showSpecModal, setShowSpecModal] = useState(false);
+  const [selectedSpec, setSelectedSpec] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -15,28 +17,76 @@ export default function CartPage() {
   const loadCartItems = () => {
     const items = [];
     
-    // Load calculator order
+    // Load calculator order - FIXED DATA MAPPING
     const calculatorOrder = localStorage.getItem('pendingCalculatorOrder');
     if (calculatorOrder) {
       try {
         const order = JSON.parse(calculatorOrder);
+        console.log('Calculator order data:', order); // Debug log
+        
+        // Build detailed description from calculator config
+        const details = [];
+        if (order.wallHeight) details.push(`Wall Height: ${order.wallHeight}"`);
+        if (order.coverage || order.coverageType) {
+          const coverage = order.coverage || order.coverageType;
+          details.push(`Coverage: ${coverage === 'full' ? 'Full Height' : 'Wainscot'}`);
+        }
+        if (order.boardWidth || order.boardLength) {
+          const boardSize = order.boardWidth || order.boardLength;
+          details.push(`Board: ${boardSize}"`);
+        }
+        if (order.wallCount || (order.walls && order.walls.length)) {
+          const wallCount = order.wallCount || order.walls?.length || 'Multiple';
+          details.push(`Walls: ${wallCount}`);
+        }
+        
+        // Get cost from costEstimate object or fallback
+        let totalCost = 0;
+        if (order.costEstimate && typeof order.costEstimate === 'object') {
+          totalCost = order.costEstimate.total || order.costEstimate.grandTotal || 0;
+        } else if (order.totalCost) {
+          totalCost = order.totalCost;
+        } else if (order.cost && typeof order.cost === 'number') {
+          totalCost = order.cost;
+        }
+        
+        // Create specification preview
+        let specPreview = '';
+        if (order.specification && typeof order.specification === 'string') {
+          // Extract key lines from specification
+          const specLines = order.specification.split('\n');
+          const keyLines = specLines.filter(line => 
+            line.includes('PROJECT:') || 
+            line.includes('Wall Height:') ||
+            line.includes('Coverage:') ||
+            line.includes('Material:') ||
+            line.includes('WALL DETAILS') ||
+            line.includes('Wall 1:')
+          );
+          specPreview = keyLines.slice(0, 4).join(' • ');
+        } else if (order.results) {
+          specPreview = order.results;
+        }
+        
         items.push({
           id: 'calc-1',
           type: 'calculator',
           name: order.projectName || 'Custom Wall Configuration',
-          description: `Material: ${order.material || 'Wood'} | Profile: ${order.profile || 'Classic'} | Coverage: ${order.coverage || 'Full Height'}`,
-          details: order.results || 'Complete wall system configuration',
-          price: order.totalCost || 5000,
+          description: details.join(' | '),
+          details: specPreview || 'Complete modular wall system with all components',
+          price: totalCost || 2500, // Reasonable fallback if no cost calculated
           quantity: 1,
           canEditQuantity: false, // Calculator configs can't change quantity
-          icon: '📐'
+          icon: '📐',
+          fullSpecification: order.specification || '', // Store full spec for detailed view
+          calculatorData: order // Store full calculator data
         });
       } catch (e) {
         console.error('Error parsing calculator order:', e);
       }
     }
     
-    // Load material orders
+    // Load material orders - UNCHANGED
     const materialOrders = localStorage.getItem('materialOrders');
     if (materialOrders) {
       try {
@@ -107,6 +157,37 @@ export default function CartPage() {
       localStorage.removeItem('pendingCalculatorOrder');
       localStorage.removeItem('materialOrders');
       setCartItems([]);
+    }
+  };
+
+  // Professional specification modal
+  const viewSpecification = (item) => {
+    if (item.type === 'calculator' && item.fullSpecification) {
+      setSelectedSpec({
+        title: item.name,
+        specification: item.fullSpecification,
+        calculatorData: item.calculatorData
+      });
+      setShowSpecModal(true);
+    }
+  };
+
+  const closeSpecModal = () => {
+    setShowSpecModal(false);
+    setSelectedSpec(null);
+  };
+
+  const downloadSpecification = () => {
+    if (selectedSpec && selectedSpec.specification) {
+      const blob = new Blob([selectedSpec.specification], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${selectedSpec.title.replace(/\s+/g, '_')}_Specification.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
   };
 
@@ -278,57 +359,57 @@ export default function CartPage() {
         }
 
         .item-type-badge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: #B19359;
-  color: white;
-  padding: 4px 12px;
-  font-size: 11px;
-  letter-spacing: 1px;
-  border-radius: 2px;
-  margin-bottom: 15px;  /* Added more space */
-}
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          background: #B19359;
+          color: white;
+          padding: 4px 12px;
+          font-size: 11px;
+          letter-spacing: 1px;
+          border-radius: 2px;
+          margin-bottom: 15px;
+        }
 
         .item-type-badge.material {
           background: #34499E;
         }
 
-.item-image {
-  width: 120px;
-  height: 120px;
-  background: linear-gradient(135deg, #EFEEE1 0%, #D1C6B4 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 48px;
-  color: #232320;
-  border: 1px solid #D1C6B4;
-}
+        .item-image {
+          width: 120px;
+          height: 120px;
+          background: linear-gradient(135deg, #EFEEE1 0%, #D1C6B4 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 48px;
+          color: #232320;
+          border: 1px solid #D1C6B4;
+        }
 
-@media (max-width: 640px) {
-  .cart-item {
-    grid-template-columns: 1fr;
-    gap: 15px;
-  }
-  
-  .item-type-badge {
-    position: static;
-    display: inline-block;
-    margin-bottom: 15px;
-  }
-  
-  .item-image {
-    width: 100%;
-    height: 150px;
-  }
-  
-  .item-price-section {
-    text-align: left;
-    padding-top: 20px;
-    border-top: 1px solid #EFEEE1;
-  }
-}
+        @media (max-width: 640px) {
+          .cart-item {
+            grid-template-columns: 1fr;
+            gap: 15px;
+          }
+          
+          .item-type-badge {
+            position: static;
+            display: inline-block;
+            margin-bottom: 15px;
+          }
+          
+          .item-image {
+            width: 100%;
+            height: 150px;
+          }
+          
+          .item-price-section {
+            text-align: left;
+            padding-top: 20px;
+            border-top: 1px solid #EFEEE1;
+          }
+        }
 
         .item-details {
           flex: 1;
@@ -354,6 +435,7 @@ export default function CartPage() {
           color: #B19359;
           margin-bottom: 15px;
           font-style: italic;
+          line-height: 1.4;
         }
 
         .item-actions {
@@ -425,13 +507,14 @@ export default function CartPage() {
           }
         }
 
-       .item-price {
-  font-size: 20px;  /* Reduced from 24px */
-  font-weight: 500;
-  color: #232320;
-  margin-bottom: 10px;
-  margin-top: 8px;  /* Added spacing from badge */
-}
+        .item-price {
+          font-size: 20px;
+          font-weight: 500;
+          color: #232320;
+          margin-bottom: 10px;
+          margin-top: 8px;
+        }
+
         .remove-btn {
           background: none;
           border: none;
@@ -445,6 +528,175 @@ export default function CartPage() {
 
         .remove-btn:hover {
           color: #232320;
+        }
+
+        .view-spec-btn {
+          background: none;
+          border: 1px solid #34499E;
+          color: #34499E;
+          cursor: pointer;
+          font-size: 12px;
+          padding: 6px 12px;
+          transition: all 0.3s ease;
+          font-family: 'Roboto Mono', monospace;
+          letter-spacing: 1px;
+        }
+
+        .view-spec-btn:hover {
+          background: #34499E;
+          color: white;
+        }
+
+        /* PROFESSIONAL SPECIFICATION MODAL - CALCULATOR STYLING */
+        .spec-modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(35,35,32,0.95);
+          z-index: 1000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          padding: 20px;
+        }
+
+        .spec-modal-overlay.show {
+          opacity: 1;
+        }
+
+        .spec-modal-content {
+          background: #232320;
+          color: #EFEEE1;
+          width: min(90vw, 900px);
+          max-height: 85vh;
+          overflow: hidden;
+          transform: translateY(20px);
+          transition: transform 0.3s ease;
+          font-family: 'Roboto Mono', monospace;
+          border: 2px solid #B19359;
+        }
+
+        .spec-modal-overlay.show .spec-modal-content {
+          transform: translateY(0);
+        }
+
+        .spec-modal-header {
+          padding: clamp(20px, 4vw, 30px);
+          border-bottom: 2px solid #B19359;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          background: #232320;
+          position: sticky;
+          top: 0;
+          z-index: 10;
+        }
+
+        .spec-modal-title {
+          font-size: clamp(16px, 3.5vw, 20px);
+          margin: 0;
+          font-weight: 700;
+          letter-spacing: clamp(1.5px, 0.3vw, 2.2px);
+          text-transform: uppercase;
+          color: #B19359;
+        }
+
+        .spec-modal-actions {
+          display: flex;
+          gap: 15px;
+          align-items: center;
+        }
+
+        .spec-download-btn {
+          background: #B19359;
+          color: white;
+          border: none;
+          padding: 8px 16px;
+          font-size: 11px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          font-family: 'Roboto Mono', monospace;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+        }
+
+        .spec-download-btn:hover {
+          background: #34499E;
+        }
+
+        .spec-modal-close {
+          background: none;
+          border: none;
+          color: #EFEEE1;
+          cursor: pointer;
+          padding: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+          font-size: 24px;
+          line-height: 1;
+        }
+
+        .spec-modal-close:hover {
+          background: rgba(255,255,255,0.1);
+          color: #B19359;
+        }
+
+        .spec-modal-body {
+          padding: clamp(25px, 5vw, 40px);
+          overflow-y: auto;
+          max-height: calc(85vh - 80px);
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .spec-content {
+          background: #232320;
+          color: #EFEEE1;
+        }
+
+        .spec-content pre {
+          font-family: 'Roboto Mono', monospace;
+          font-size: clamp(10px, 2vw, 13px);
+          line-height: 1.8;
+          margin: 0;
+          white-space: pre-wrap;
+          word-wrap: break-word;
+          letter-spacing: 0.15px;
+          color: #EFEEE1;
+        }
+
+        .spec-summary {
+          background: rgba(177,147,89,0.1);
+          border: 1px solid #B19359;
+          padding: 20px;
+          margin-bottom: 30px;
+        }
+
+        .spec-summary h4 {
+          color: #B19359;
+          margin: 0 0 15px 0;
+          font-size: 14px;
+          letter-spacing: 2px;
+          text-transform: uppercase;
+        }
+
+        .spec-summary-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 15px;
+          font-size: 12px;
+        }
+
+        .spec-summary-item {
+          display: flex;
+          justify-content: space-between;
+          padding: 5px 0;
+          border-bottom: 1px solid rgba(177,147,89,0.3);
         }
 
         .cart-summary {
@@ -582,6 +834,23 @@ export default function CartPage() {
           font-size: 18px;
           color: #A1A2A0;
         }
+
+        @media (max-width: 640px) {
+          .spec-modal-content {
+            width: 95vw;
+            margin: 10px;
+          }
+          
+          .spec-modal-header {
+            flex-direction: column;
+            gap: 15px;
+          }
+          
+          .spec-modal-actions {
+            width: 100%;
+            justify-content: space-between;
+          }
+        }
       `}</style>
 
       <div className="cart-container">
@@ -669,6 +938,15 @@ export default function CartPage() {
                           </div>
                         )}
                         
+                        {item.type === 'calculator' && item.fullSpecification && (
+                          <button 
+                            className="view-spec-btn"
+                            onClick={() => viewSpecification(item)}
+                          >
+                            VIEW FULL SPEC
+                          </button>
+                        )}
+                        
                         <button 
                           className="remove-btn"
                           onClick={() => removeItem(item.id)}
@@ -753,6 +1031,83 @@ export default function CartPage() {
             </div>
           )}
         </div>
+
+        {/* PROFESSIONAL SPECIFICATION MODAL */}
+        {showSpecModal && (
+          <div 
+            className={`spec-modal-overlay ${showSpecModal ? 'show' : ''}`}
+            onClick={(e) => e.target === e.currentTarget && closeSpecModal()}
+          >
+            <div className="spec-modal-content">
+              <div className="spec-modal-header">
+                <h3 className="spec-modal-title">{selectedSpec?.title} - Specification</h3>
+                <div className="spec-modal-actions">
+                  <button 
+                    className="spec-download-btn"
+                    onClick={downloadSpecification}
+                  >
+                    <svg style={{ width: '14px', height: '14px', marginRight: '6px', verticalAlign: 'middle' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Download
+                  </button>
+                  <button 
+                    className="spec-modal-close"
+                    onClick={closeSpecModal}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+              
+              <div className="spec-modal-body">
+                {selectedSpec?.calculatorData && (
+                  <div className="spec-summary">
+                    <h4>Configuration Summary</h4>
+                    <div className="spec-summary-grid">
+                      {selectedSpec.calculatorData.wallHeight && (
+                        <div className="spec-summary-item">
+                          <span>Wall Height:</span>
+                          <span>{selectedSpec.calculatorData.wallHeight}"</span>
+                        </div>
+                      )}
+                      {selectedSpec.calculatorData.coverageType && (
+                        <div className="spec-summary-item">
+                          <span>Coverage:</span>
+                          <span>{selectedSpec.calculatorData.coverageType === 'full' ? 'Full Height' : 'Wainscot'}</span>
+                        </div>
+                      )}
+                      {(selectedSpec.calculatorData.boardWidth || selectedSpec.calculatorData.boardLength) && (
+                        <div className="spec-summary-item">
+                          <span>Board Length:</span>
+                          <span>{selectedSpec.calculatorData.boardWidth || selectedSpec.calculatorData.boardLength}"</span>
+                        </div>
+                      )}
+                      {selectedSpec.calculatorData.material && (
+                        <div className="spec-summary-item">
+                          <span>Material:</span>
+                          <span>{selectedSpec.calculatorData.material}</span>
+                        </div>
+                      )}
+                      {selectedSpec.calculatorData.costEstimate?.total && (
+                        <div className="spec-summary-item">
+                          <span>Total Cost:</span>
+                          <span>${selectedSpec.calculatorData.costEstimate.total.toFixed(2)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="spec-content">
+                  <pre>{selectedSpec?.specification}</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

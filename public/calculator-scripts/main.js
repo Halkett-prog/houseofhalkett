@@ -1,98 +1,159 @@
 // HALKETT Calculator - Main Application v60
+// FIXED VERSION: Combines reorganized steps with working Vercel calculations + FIXED RESULTS DISPLAY
 
-// Step validation
+// Step validation - UPDATED for reorganized steps but with working validation logic
 function validateStep(step) {
     switch(step) {
         case 1:
-            // Step 1: Welcome/System Overview - no validation needed
+            // Step 1: Welcome/System Overview - NOW INCLUDES PROJECT NAME VALIDATION (moved from Step 2)
+            const projectName = document.getElementById('projectName')?.value;
+            
+            if (!projectName || projectName.trim() === '') {
+                if (typeof showNotification === 'function') {
+                    showNotification('Please enter a project name or PO number', 'error');
+                }
+                document.getElementById('projectName').focus();
+                return false;
+            }
+            
+            // Save project name to configuration
+            projectConfig.projectName = projectName.trim();
+            console.log('Project name saved:', projectConfig.projectName);
+            
             return true;
             
         case 2:
-            // Step 2: Wall Configuration
-            const projectName = document.getElementById('projectName').value.trim();
-            if (!projectName) {
-                showNotification('Please enter a Project Name or PO Number', 'error');
-                document.getElementById('projectName').focus();
-                highlightError('projectName');
-                return false;
-            }
+            // Step 2: Wall Configuration - NOW INCLUDES BOARD SELECTION (reorganized)
+            const wallHeight = document.getElementById('wallHeight')?.value;
+            const coverageType = document.querySelector('input[name="coverage"]:checked')?.value;
             
-            const wallHeight = parseInt(document.getElementById('wallHeight').value);
             if (!wallHeight || wallHeight < 24 || wallHeight > 200) {
-                showNotification('Please enter wall height between 24" and 200"', 'error');
+                if (typeof showNotification === 'function') {
+                    showNotification('Please enter a wall height between 24" and 200"', 'error');
+                }
                 document.getElementById('wallHeight').focus();
-                highlightError('wallHeight');
                 return false;
             }
-            projectConfig.wallHeight = wallHeight;
-            projectConfig.projectName = projectName;
             
-            const coverageType = document.querySelector('input[name="coverage"]:checked').value;
+            // Save configuration
+            projectConfig.wallHeight = parseFloat(wallHeight);
             projectConfig.coverageType = coverageType;
             
+            console.log('Step 2 validation - Coverage type:', coverageType);
+            
             if (coverageType === 'partial') {
-                const coverageHeight = parseInt(document.getElementById('coverageHeight').value);
-                if (!coverageHeight || coverageHeight < 12 || coverageHeight >= wallHeight) {
-                    showNotification(`Wainscot height must be between 12" and ${wallHeight - 1}"`, 'error');
-                    document.getElementById('coverageHeight').focus();
-                    highlightError('coverageHeight');
-                    return false;
-                }
-                projectConfig.coverageHeight = coverageHeight;
-                projectConfig.needsCap = true;
-                document.getElementById('capRailOptions').style.display = 'block';
-                // Update trim options for wainscot
-                if (typeof updateTrimOptions === 'function') {
-                    updateTrimOptions();
+                const coverageHeight = document.getElementById('coverageHeight')?.value;
+                const wainscotHeightDiv = document.getElementById('wainscotHeight');
+                
+                // Check if wainscot height div is visible
+                if (wainscotHeightDiv && wainscotHeightDiv.style.display !== 'none') {
+                    if (!coverageHeight || coverageHeight === '') {
+                        if (typeof showNotification === 'function') {
+                            showNotification('Please enter wainscot height', 'error');
+                        }
+                        document.getElementById('coverageHeight').focus();
+                        return false;
+                    }
+                    
+                    const wainscotHeightValue = parseFloat(coverageHeight);
+                    const wallHeightValue = parseFloat(wallHeight);
+                    
+                    if (wainscotHeightValue < 12) {
+                        if (typeof showNotification === 'function') {
+                            showNotification('Wainscot height must be at least 12"', 'error');
+                        }
+                        document.getElementById('coverageHeight').focus();
+                        return false;
+                    }
+                    
+                    if (wainscotHeightValue >= wallHeightValue) {
+                        if (typeof showNotification === 'function') {
+                            showNotification('Wainscot height must be less than wall height', 'error');
+                        }
+                        document.getElementById('coverageHeight').focus();
+                        return false;
+                    }
+                    
+                    projectConfig.coverageHeight = wainscotHeightValue;
+                    projectConfig.needsCap = true;
+                    console.log('Wainscot height saved:', projectConfig.coverageHeight);
                 }
             } else {
-                projectConfig.coverageHeight = wallHeight;
-                document.getElementById('capRailOptions').style.display = 'none';
-                // Update trim options for full height
-                if (typeof updateTrimOptions === 'function') {
-                    updateTrimOptions();
-                }
-            }
-            
-            updateBoardRecommendation();
-            return true;
-            
-        case 3:
-            // Step 3: Design Selection (Profile & Board System)
-            const boardLength = document.getElementById('boardLength').value;
-            if (!boardLength) {
-                showNotification('Please select a modular board system size', 'error');
-                document.getElementById('boardLength').focus();
-                return false;
-            }
-            
-            const profile = document.querySelector('input[name="profile"]:checked');
-            if (!profile) {
-                showNotification('Please select a profile style', 'error');
-                return false;
-            }
-            
-            projectConfig.boardLength = parseInt(boardLength);
-            projectConfig.boardStyle = profile.value;
-            
-            // Handle cap rail selection if wainscot
-            if (projectConfig.coverageType === 'partial') {
-                const capSelection = document.querySelector('input[name="capProfile"]:checked')?.value;
-                if (!capSelection) {
-                    showNotification('Please select a cap rail profile', 'error');
+                // Full height - handle custom gaps if present
+                const ceilingGap = parseFloat(document.getElementById('ceilingGap')?.value) || 1.5;
+                const floorGap = parseFloat(document.getElementById('floorGap')?.value) || 0;
+                
+                // Check if gaps exceed maximum
+                if (ceilingGap > 6 || floorGap > 6) {
+                    if (typeof showNotification === 'function') {
+                        showNotification('Maximum clearance allowed is 6". Please adjust clearances or consider wainscot coverage.', 'error');
+                    }
+                    if (ceilingGap > 6) document.getElementById('ceilingGap').focus();
+                    else document.getElementById('floorGap').focus();
                     return false;
                 }
                 
-                if (capSelection === '1.75') {
+                projectConfig.customCeilingGap = ceilingGap;
+                projectConfig.customFloorGap = floorGap;
+                projectConfig.coverageHeight = projectConfig.wallHeight;
+            }
+            
+            // BOARD VALIDATION - Check if board selection section is visible (reorganized feature)
+            const boardSelectionDiv = document.getElementById('boardSelectionSection');
+            if (boardSelectionDiv && boardSelectionDiv.style.display !== 'none') {
+                const boardLength = document.getElementById('boardLength')?.value;
+                
+                if (!boardLength) {
+                    if (typeof showNotification === 'function') {
+                        showNotification('Please select a board length', 'error');
+                    }
+                    document.getElementById('boardLength').focus();
+                    return false;
+                }
+                
+                // Save board configuration
+                projectConfig.boardLength = parseFloat(boardLength);
+                console.log('Board length validated and saved:', projectConfig.boardLength);
+            }
+            
+            console.log('Final projectConfig after Step 2:', projectConfig);
+            return true;
+            
+        case 3:
+            // Step 3: Design Selection - Profile selection (board moved to Step 2)
+            const selectedProfile = document.querySelector('input[name="profile"]:checked');
+            
+            if (!selectedProfile) {
+                if (typeof showNotification === 'function') {
+                    showNotification('Please select a profile style', 'error');
+                }
+                return false;
+            }
+            
+            // Save configuration
+            projectConfig.boardStyle = selectedProfile.value;
+            
+            // Handle cap rail for wainscot
+            if (projectConfig.coverageType === 'partial') {
+                const capProfile = document.querySelector('input[name="capProfile"]:checked');
+                if (!capProfile) {
+                    if (typeof showNotification === 'function') {
+                        showNotification('Please select a cap rail profile for wainscot', 'error');
+                    }
+                    return false;
+                }
+                
+                // Parse cap profile selection
+                if (capProfile.value === '1.75') {
                     projectConfig.capWidth = '1.75';
                     projectConfig.capEdge = 'standard';
-                } else if (capSelection === '2.5-square') {
+                } else if (capProfile.value === '2.5-square') {
                     projectConfig.capWidth = '2.5';
                     projectConfig.capEdge = 'square';
-                } else if (capSelection === '2.5-beveled') {
+                } else if (capProfile.value === '2.5-beveled') {
                     projectConfig.capWidth = '2.5';
                     projectConfig.capEdge = 'beveled';
-                } else if (capSelection === '2.5-bullnose') {
+                } else if (capProfile.value === '2.5-bullnose') {
                     projectConfig.capWidth = '2.5';
                     projectConfig.capEdge = 'bullnose';
                 }
@@ -101,63 +162,57 @@ function validateStep(step) {
             return true;
             
         case 4:
-            // Step 4: Materials & Finishes
-            const boardMaterial = document.querySelector('input[name="material"]:checked');
-            if (!boardMaterial) {
-                showNotification('Please select a board material', 'error');
+            // Step 4: Materials & Finishes (trim moved to Step 2)
+            const material = document.querySelector('input[name="material"]:checked');
+            if (!material) {
+                if (typeof showNotification === 'function') {
+                    showNotification('Please select a board material', 'error');
+                }
                 return false;
             }
             
-            const material = boardMaterial.value;
-            projectConfig.boardMaterial = material;
+            projectConfig.boardMaterial = material.value;
             
-            const materialDetail = document.getElementById('materialDetails')?.querySelector('select');
-            
-            if (materialDetail && materialDetail.id === 'materialDetail' && !materialDetail.value) {
-                let detailType = '';
-                switch(material) {
-                    case 'natural-wood':
-                        detailType = 'wood species';
-                        break;
-                    case 'painted':
-                        detailType = 'paint color';
-                        break;
-                    case 'metal':
-                        detailType = 'metal finish';
-                        break;
-                }
-                if (detailType) {
-                    showNotification(`Please select a ${detailType}`, 'error');
-                    materialDetail.focus();
-                    highlightError('materialDetail');
+            // Check if material details are selected (if applicable)
+            const detailsDiv = document.getElementById('materialDetails');
+            if (detailsDiv && detailsDiv.innerHTML.includes('select')) {
+                const detailSelect = detailsDiv.querySelector('select');
+                if (detailSelect && !detailSelect.value) {
+                    if (typeof showNotification === 'function') {
+                        showNotification('Please select a specific material option', 'error');
+                    }
+                    detailSelect.focus();
                     return false;
+                }
+                if (detailSelect) {
+                    projectConfig.materialDetail = detailSelect.value;
                 }
             }
             
-            if (material === 'leather') {
+            // Handle leather material details
+            if (material.value === 'leather') {
                 const leatherType = document.getElementById('leatherType');
                 const leatherColor = document.getElementById('leatherColor');
                 if (!leatherType?.value || !leatherColor?.value) {
-                    showNotification('Please select both leather type and color', 'error');
+                    if (typeof showNotification === 'function') {
+                        showNotification('Please select both leather type and color', 'error');
+                    }
                     if (leatherType && !leatherType.value) {
                         leatherType.focus();
-                        highlightError('leatherType');
                     }
                     return false;
                 }
                 projectConfig.materialDetail = `${leatherType.value}-${leatherColor.value}`;
-            } else if (materialDetail) {
-                projectConfig.materialDetail = materialDetail.value;
             }
             
-            // Save trim options based on coverage type
+            // Save trim selections (moved from original Step 4 but logic preserved)
             if (projectConfig.coverageType === 'full') {
                 projectConfig.useCeilingTrim = document.getElementById('ceilingTrim')?.checked || false;
                 projectConfig.useFloorTrim = document.getElementById('baseTrimFull')?.checked || false;
             } else {
                 projectConfig.useCeilingTrim = false; // Never for wainscot
-                projectConfig.useFloorTrim = document.getElementById('baseTrimWainscot')?.checked || false;
-                projectConfig.needsCap = document.getElementById('capRailCheck')?.checked !== false; // Default true for wainscot
+                projectConfig.useFloorTrim = document.getElementById('baseTrimPartial')?.checked || false;
+                projectConfig.needsCap = true; // Always for wainscot
             }
             
             // Save trim material selection
@@ -172,81 +227,120 @@ function validateStep(step) {
                 projectConfig.fillerMaterial = '';
             }
             
-            // Update board recommendation based on trim selections
-            updateBoardRecommendation();
-            
             return true;
             
         case 5:
-            // Step 5: Wall Details
-            const wallCount = parseInt(document.getElementById('wallCount').value);
-            if (!wallCount || wallCount < 1 || wallCount > 10) {
-                showNotification('Please enter number of walls (1-10)', 'error');
+            // Step 5: Wall Details - RESTORED WORKING VALIDATION FROM VERCEL
+            const wallCount = parseInt(document.getElementById('wallCount')?.value);
+            const wallsContainer = document.getElementById('wallsContainer');
+            
+            if (!wallCount || wallCount < 1) {
+                if (typeof showNotification === 'function') {
+                    showNotification('Please enter the number of walls', 'error');
+                }
                 document.getElementById('wallCount').focus();
-                highlightError('wallCount');
                 return false;
             }
             
             // Check if walls have been generated
-            const wallsContainer = document.getElementById('wallsContainer');
-            if (!wallsContainer.innerHTML.trim()) {
-                showNotification('Please click "Configure Walls" to set up wall details', 'error');
+            if (!wallsContainer || wallsContainer.children.length === 0) {
+                if (typeof showNotification === 'function') {
+                    showNotification('Please click "Configure Walls" to set up wall details', 'error');
+                }
                 return false;
             }
             
+            // CRITICAL: Clear and rebuild globalWallDetails using WORKING VERCEL LOGIC
             globalWallDetails = [];
             let allValid = true;
             
             for (let i = 1; i <= wallCount; i++) {
                 const lengthInput = document.getElementById(`length${i}`);
                 if (!lengthInput) {
-                    showNotification('Please configure walls first', 'error');
+                    if (typeof showNotification === 'function') {
+                        showNotification('Please configure walls first', 'error');
+                    }
                     return false;
                 }
                 
                 const length = projectConfig.useMetric ? 
                     fromMetric(parseFloat(lengthInput.value)) : 
                     parseFloat(lengthInput.value);
-                const left = document.getElementById(`left${i}`).value;
-                const right = document.getElementById(`right${i}`).value;
-                const connected = i > 1 ? document.getElementById(`connected${i}`)?.value : 'no';
+                const leftSelect = document.getElementById(`left${i}`);
+                const rightSelect = document.getElementById(`right${i}`);
+                const leftValue = leftSelect?.value;
+                const rightValue = rightSelect?.value;
                 
-                if (!length || !left || !right || (i > 1 && connected === '')) {
-                    showNotification(`Please complete all fields for Wall ${i}`, 'error');
-                    if (!length) highlightError(`length${i}`);
-                    if (!left) highlightError(`left${i}`);
-                    if (!right) highlightError(`right${i}`);
-                    if (i > 1 && connected === '') highlightError(`connected${i}`);
+                if (!length || !leftValue || !rightValue) {
+                    if (typeof showNotification === 'function') {
+                        showNotification(`Please complete all fields for Wall ${i}`, 'error');
+                    }
+                    if (!length) lengthInput.focus();
+                    else if (!leftValue) leftSelect.focus();
+                    else if (!rightValue) rightSelect.focus();
                     allValid = false;
                     break;
                 }
                 
-                const validation = validateWallLength(length);
-                if (!validation.valid) {
-                    showNotification(`Wall ${i}: ${validation.error}`, 'error');
-                    highlightError(`length${i}`);
-                    allValid = false;
-                    break;
+                // Check connection for walls after the first one
+                let connected = 'no';
+                if (i > 1) {
+                    const connectedSelect = document.getElementById(`connected${i}`);
+                    connected = connectedSelect?.value;
+                    
+                    if (!connected) {
+                        if (typeof showNotification === 'function') {
+                            showNotification(`Please select connection option for Wall ${i}`, 'error');
+                        }
+                        connectedSelect.focus();
+                        return false;
+                    }
                 }
                 
-                const calc = calculateWall(length, left, right, connected === 'yes');
-                
-                if (!calc.success) {
-                    showNotification(`Wall ${i}: ${calc.error}`, 'error');
-                    allValid = false;
-                    break;
+                // Validate wall length using working function
+                if (typeof validateWallLength === 'function') {
+                    const validation = validateWallLength(length);
+                    if (!validation.valid) {
+                        if (typeof showNotification === 'function') {
+                            showNotification(`Wall ${i}: ${validation.error}`, 'error');
+                        }
+                        lengthInput.focus();
+                        allValid = false;
+                        break;
+                    }
                 }
                 
-                globalWallDetails.push({
-                    number: i,
-                    length: length,
-                    leftType: left,
-                    rightType: right,
-                    connected: connected,
-                    ...calc
-                });
+                // Calculate wall using WORKING VERCEL FUNCTION
+                if (typeof calculateWall === 'function') {
+                    const calc = calculateWall(length, leftValue, rightValue, connected === 'yes');
+                    
+                    if (!calc.success) {
+                        if (typeof showNotification === 'function') {
+                            showNotification(`Wall ${i}: ${calc.error || 'Calculation failed'}`, 'error');
+                        }
+                        allValid = false;
+                        break;
+                    }
+                    
+                    // CRITICAL: Save wall details to global array using VERCEL STRUCTURE
+                    globalWallDetails.push({
+                        number: i,
+                        length: length,
+                        leftType: leftValue,
+                        rightType: rightValue,
+                        connected: connected,
+                        ...calc  // This spreads all the calculation results from working Vercel function
+                    });
+                } else {
+                    console.error('calculateWall function not available');
+                    if (typeof showNotification === 'function') {
+                        showNotification('Calculation function not available', 'error');
+                    }
+                    return false;
+                }
             }
             
+            console.log('Wall validation complete. globalWallDetails:', globalWallDetails);
             return allValid;
             
         default:
@@ -254,27 +348,48 @@ function validateStep(step) {
     }
 }
 
-// Calculate all results
+// RESTORED WORKING CALCULATION FUNCTIONS FROM VERCEL
+
+// Calculate all results - EXACT VERCEL LOGIC
 function calculateAll() {
-    showLoadingOverlay(true);
+    if (typeof showLoadingOverlay === 'function') {
+        showLoadingOverlay(true);
+    }
     
     setTimeout(() => {
         try {
             generateSpecification();
-            displayCostEstimate();
-            displayInstallationTime();
-            showLoadingOverlay(false);
-            showNotification('Calculation complete!', 'success');
+            if (typeof displayCostEstimate === 'function') {
+                displayCostEstimate();
+            }
+            if (typeof displayInstallationTime === 'function') {
+                displayInstallationTime();
+            }
+            if (typeof showLoadingOverlay === 'function') {
+                showLoadingOverlay(false);
+            }
+            if (typeof showNotification === 'function') {
+                showNotification('Calculation complete!', 'success');
+            }
         } catch (error) {
             console.error('Calculation error:', error);
-            showLoadingOverlay(false);
-            showNotification('Error during calculation. Please check your inputs.', 'error');
+            if (typeof showLoadingOverlay === 'function') {
+                showLoadingOverlay(false);
+            }
+            if (typeof showNotification === 'function') {
+                showNotification('Error during calculation. Please check your inputs.', 'error');
+            }
         }
     }, 500);
 }
 
-// Generate specification text
+// Generate specification text - EXACT VERCEL LOGIC WITH FIXED CSS DISPLAY
 function generateSpecification() {
+    if (!globalWallDetails || globalWallDetails.length === 0) {
+        console.error('No wall details available for specification generation');
+        return;
+    }
+    
     let spec = `PROJECT: ${projectConfig.projectName}\n`;
     spec += `DATE: ${new Date().toLocaleDateString()}\n`;
     spec += `VERSION: ${VERSION}\n`;
@@ -283,7 +398,7 @@ function generateSpecification() {
     spec += `CONFIGURATION SUMMARY\n`;
     spec += `Wall Height: ${formatDimension(projectConfig.wallHeight)}\n`;
     spec += `Coverage: ${projectConfig.coverageType === 'full' ? 'Full Height' : `Wainscot ${formatDimension(projectConfig.coverageHeight)}`}\n`;
-    spec += `Profile: ${projectConfig.boardStyle.charAt(0).toUpperCase() + projectConfig.boardStyle.slice(1)}\n`;
+    spec += `Profile: ${projectConfig.boardStyle ? projectConfig.boardStyle.charAt(0).toUpperCase() + projectConfig.boardStyle.slice(1) : 'Contemporary'}\n`;
     spec += `Material: ${getMaterialDescription()}\n`;
     spec += `Board Length: ${projectConfig.boardLength}"\n`;
     
@@ -295,7 +410,7 @@ function generateSpecification() {
     }
     
     if (projectConfig.coverageType === 'partial') {
-        spec += `Cap Rail: ${projectConfig.capWidth}" ${projectConfig.capEdge}\n`;
+        spec += `Cap Rail: ${projectConfig.capWidth || '1.75'}" ${projectConfig.capEdge || 'standard'}\n`;
     }
     
     spec += `Ceiling Trim: ${projectConfig.useCeilingTrim ? 'Yes' : 'No'}\n`;
@@ -310,17 +425,17 @@ function generateSpecification() {
             spec += `  Connected to previous wall\n`;
         }
         
-        // CHANGED: Show structural sizes for cutting, not visible sizes
+        // Show structural sizes for cutting, not visible sizes
         spec += `  Left Filler (cut to): ${formatDimension(wall.leftStruct)}\n`;
         spec += `  Right Filler (cut to): ${formatDimension(wall.rightStruct)}\n`;
         spec += `  Visible gap each side: ${formatDimension(wall.visible)}\n`;
         
         spec += `  Boards: `;
         const boardList = [];
-        if (wall.panels['6N-P1'] > 0) boardList.push(`${wall.panels['6N-P1']} x 6"N-P1`);
-        if (wall.panels['4N-P1'] > 0) boardList.push(`${wall.panels['4N-P1']} x 4"N-P1`);
-        if (wall.panels['2N-P1'] > 0) boardList.push(`${wall.panels['2N-P1']} x 2"N-P1`);
-        if (wall.panels.p2Size > 0) boardList.push(`1 x ${wall.panels.p2Size}"N-P2`);
+        if (wall.panels && wall.panels['6N-P1'] > 0) boardList.push(`${wall.panels['6N-P1']} x 6"N-P1`);
+        if (wall.panels && wall.panels['4N-P1'] > 0) boardList.push(`${wall.panels['4N-P1']} x 4"N-P1`);
+        if (wall.panels && wall.panels['2N-P1'] > 0) boardList.push(`${wall.panels['2N-P1']} x 2"N-P1`);
+        if (wall.panels && wall.panels.p2Size > 0) boardList.push(`1 x ${wall.panels.p2Size}"N-P2`);
         spec += boardList.join(', ') + '\n';
     });
     
@@ -336,15 +451,17 @@ function generateSpecification() {
     
     globalWallDetails.forEach(wall => {
         // Count boards
-        ['6N-P1', '4N-P1', '2N-P1'].forEach(type => {
-            if (wall.panels[type] > 0) {
-                materials.boards[type] = (materials.boards[type] || 0) + wall.panels[type];
+        if (wall.panels) {
+            ['6N-P1', '4N-P1', '2N-P1'].forEach(type => {
+                if (wall.panels[type] > 0) {
+                    materials.boards[type] = (materials.boards[type] || 0) + wall.panels[type];
+                }
+            });
+            
+            if (wall.panels.p2Size > 0) {
+                const p2Type = `${wall.panels.p2Size}N-P2`;
+                materials.boards[p2Type] = (materials.boards[p2Type] || 0) + 1;
             }
-        });
-        
-        if (wall.panels.p2Size > 0) {
-            const p2Type = `${wall.panels.p2Size}N-P2`;
-            materials.boards[p2Type] = (materials.boards[p2Type] || 0) + 1;
         }
         
         // Count fillers
@@ -360,7 +477,6 @@ function generateSpecification() {
     });
     
     spec += `\nFILLERS (Structural/Cut Sizes)\n`;
-    // Show actual cut sizes for each filler type with installation notes
     Object.entries(materials.fillers).forEach(([type, count]) => {
         if (count > 0) {
             spec += `  ${type.charAt(0).toUpperCase() + type.slice(1)} Fillers: ${count}\n`;
@@ -398,7 +514,7 @@ function generateSpecification() {
     
     if (projectConfig.coverageType === 'partial' && projectConfig.needsCap) {
         spec += `\nCAP RAIL\n`;
-        spec += `  Profile: ${projectConfig.capWidth}" ${projectConfig.capEdge}\n`;
+        spec += `  Profile: ${projectConfig.capWidth || '1.75'}" ${projectConfig.capEdge || 'standard'}\n`;
         if (!projectConfig.matchMaterials && projectConfig.trimMaterial) {
             spec += `  Material: ${getTrimMaterialDescription()}\n`;
         }
@@ -423,15 +539,25 @@ function generateSpecification() {
     spec += `215.721.9331 | halkett.com\n`;
     
     globalSpecification = spec;
-    document.getElementById('resultsContainer').innerHTML = `
-        <div class="results">
-            <h3>SPECIFICATION</h3>
-            <pre>${spec}</pre>
-        </div>
-    `;
-}// main.js continued...
+    
+    // 🎯 FIXED: Display the specification with PROPER CSS classes (no inline style overrides)
+    const resultsContainer = document.getElementById('resultsContainer');
+    if (resultsContainer) {
+        resultsContainer.innerHTML = `
+            <div class="results">
+                <h3>SPECIFICATION</h3>
+                <pre>${spec}</pre>
+            </div>
+        `;
+    }
+}
 
-// Get material description
+// Helper functions for specification generation - EXACT VERCEL LOGIC
+function formatDimension(value) {
+    if (typeof value !== 'number' || isNaN(value)) return '0"';
+    return value % 1 === 0 ? `${value}"` : `${value.toFixed(2)}"`;
+}
+
 function getMaterialDescription() {
     const material = projectConfig.boardMaterial;
     const detail = projectConfig.materialDetail;
@@ -459,19 +585,22 @@ function getMaterialDescription() {
             return paints[detail] || 'Painted';
             
         case 'leather':
-            const [type, color] = detail.split('-');
-            const types = {
-                'crock': 'Crock',
-                'shagreen': 'Shagreen',
-                'bison': 'Bison'
-            };
-            const colors = {
-                'bordeaux': 'Bordeaux',
-                'cognac': 'Cognac',
-                'ebony': 'Ebony',
-                'midnight': 'Midnight'
-            };
-            return `Leather - ${types[type]} ${colors[color]}`;
+            if (detail && detail.includes('-')) {
+                const [type, color] = detail.split('-');
+                const types = {
+                    'crock': 'Crock',
+                    'shagreen': 'Shagreen',
+                    'bison': 'Bison'
+                };
+                const colors = {
+                    'bordeaux': 'Bordeaux',
+                    'cognac': 'Cognac',
+                    'ebony': 'Ebony',
+                    'midnight': 'Midnight'
+                };
+                return `Leather - ${types[type] || type} ${colors[color] || color}`;
+            }
+            return 'Leather';
             
         case 'metal':
             const metals = {
@@ -485,11 +614,10 @@ function getMaterialDescription() {
             return metals[detail] || 'Metal';
             
         default:
-            return material;
+            return material || 'Natural Wood';
     }
 }
 
-// Get trim material description
 function getTrimMaterialDescription() {
     const trimMaterial = projectConfig.trimMaterial;
     
@@ -533,467 +661,10 @@ function getTrimMaterialDescription() {
     return trimMaterial;
 }
 
-// Save configuration
-function saveConfiguration() {
-    const config = {
-        id: Date.now().toString(),
-        name: projectConfig.projectName,
-        date: new Date().toISOString(),
-        config: projectConfig,
-        walls: globalWallDetails,
-        specification: globalSpecification,
-        summary: `${globalWallDetails.length} walls, ${projectConfig.boardMaterial}`
-    };
-    
-    // Save to localStorage
-    try {
-        let saved = JSON.parse(localStorage.getItem('halkettConfigurations') || '[]');
-        saved.unshift(config);
-        saved = saved.slice(0, 10); // Keep only last 10
-        localStorage.setItem('halkettConfigurations', JSON.stringify(saved));
-        
-        recentConfigurations = saved;
-        showNotification('Configuration saved successfully!', 'success');
-    } catch (e) {
-        console.error('Save error:', e);
-        showNotification('Unable to save configuration', 'error');
-    }
-}
-
-// Restore configuration
-function restoreConfiguration(config) {
-    projectConfig = { ...projectConfig, ...config };
-    
-    // Navigate to step 6 to show results
-    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-    document.getElementById('step6').classList.add('active');
-    projectConfig.currentStep = 6;
-    updateProgress();
-    createStepIndicators();
-    
-    // Regenerate results
-    calculateAll();
-}
-
-// Auto-save progress
-function autoSaveProgress() {
-    const progress = {
-        config: projectConfig,
-        timestamp: new Date().toISOString()
-    };
-    localStorage.setItem('halkettProgress', JSON.stringify(progress));
-}
-
-// Load saved progress
-function loadSavedProgress() {
-    try {
-        const saved = localStorage.getItem('halkettProgress');
-        if (saved) {
-            const progress = JSON.parse(saved);
-            const hoursSince = (new Date() - new Date(progress.timestamp)) / (1000 * 60 * 60);
-            
-            if (hoursSince < 24 && progress.config.currentStep > 1) {
-                const resumeBtn = document.createElement('button');
-                resumeBtn.className = 'resume-button';
-                resumeBtn.textContent = 'Resume Previous Configuration';
-                resumeBtn.onclick = () => {
-                    projectConfig = { ...projectConfig, ...progress.config };
-                    goToStep(projectConfig.currentStep);
-                    resumeBtn.remove();
-                    showNotification('Previous configuration restored', 'info');
-                };
-                
-                const container = document.querySelector('.container');
-                container.insertBefore(resumeBtn, container.firstChild.nextSibling);
-            }
-        }
-        
-        // Load recent configurations
-        const recentSaved = localStorage.getItem('halkettConfigurations');
-        if (recentSaved) {
-            recentConfigurations = JSON.parse(recentSaved);
-        }
-    } catch (e) {
-        console.error('Load error:', e);
-    }
-}
-
-// Copy specification to clipboard
-function copySpecification() {
-    navigator.clipboard.writeText(globalSpecification).then(() => {
-        showNotification('Specification copied to clipboard!', 'success');
-    }).catch(() => {
-        // Fallback for older browsers
-        const textArea = document.createElement('textarea');
-        textArea.value = globalSpecification;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        document.body.appendChild(textArea);
-        textArea.select();
-        try {
-            document.execCommand('copy');
-            showNotification('Specification copied to clipboard!', 'success');
-        } catch (e) {
-            showNotification('Unable to copy. Please select and copy manually.', 'error');
-        }
-        document.body.removeChild(textArea);
-    });
-}
-
-// Email specification
-function emailSpecification() {
-    const subject = encodeURIComponent(`HALKETT Specification - ${projectConfig.projectName}`);
-    const body = encodeURIComponent(globalSpecification + '\n\n' + 
-        (globalCostEstimate ? `Estimated Cost: $${globalCostEstimate.total.toFixed(2)}\n\n` : '') +
-        'Please paste this specification into your email.');
-    
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
-}
-
-// Export cost estimate
-function exportCostEstimate() {
-    if (!globalCostEstimate) return;
-    
-    let estimate = `COST ESTIMATE\n`;
-    estimate += `Project: ${projectConfig.projectName}\n`;
-    estimate += `Date: ${new Date().toLocaleDateString()}\n`;
-    estimate += `${'='.repeat(40)}\n\n`;
-    
-    estimate += `MATERIALS\n`;
-    estimate += `Boards & Panels: $${globalCostEstimate.boards.toFixed(2)}\n`;
-    estimate += `Fillers: $${globalCostEstimate.fillers.toFixed(2)}\n`;
-    estimate += `Hardware: $${globalCostEstimate.hardware.toFixed(2)}\n`;
-    estimate += `Trim: $${globalCostEstimate.trim.toFixed(2)}\n`;
-    estimate += `Subtotal: $${globalCostEstimate.materials.toFixed(2)}\n\n`;
-    
-    estimate += `LABOR\n`;
-    estimate += `Installation: $${globalCostEstimate.labor.toFixed(2)}\n\n`;
-    
-    estimate += `TOTAL\n`;
-    estimate += `Subtotal: $${globalCostEstimate.subtotal.toFixed(2)}\n`;
-    if (globalCostEstimate.markup > 0) {
-        estimate += `Markup: $${globalCostEstimate.markup.toFixed(2)}\n`;
-    }
-    estimate += `PROJECT TOTAL: $${globalCostEstimate.total.toFixed(2)}\n\n`;
-    
-    estimate += `BREAKDOWN\n`;
-    Object.entries(globalCostEstimate.breakdown).forEach(([item, cost]) => {
-        estimate += `${item}: $${cost.toFixed(2)}\n`;
-    });
-    
-    navigator.clipboard.writeText(estimate).then(() => {
-        showNotification('Cost estimate copied to clipboard!', 'success');
-    });
-}
-
-// Generate PDF
-function generatePDF() {
-    if (typeof window.jspdf === 'undefined') {
-        showNotification('PDF library not loaded. Please refresh the page.', 'error');
-        return;
-    }
-    
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    
-    // Header
-    doc.setFontSize(20);
-    doc.setFont(undefined, 'bold');
-    doc.text('HALKETT', 105, 20, { align: 'center' });
-    
-    doc.setFontSize(10);
-    doc.setFont(undefined, 'normal');
-    doc.text('THE ART OF WALLS', 105, 28, { align: 'center' });
-    
-    // Project info
-    doc.setFontSize(12);
-    doc.text(`PROJECT: ${projectConfig.projectName}`, 20, 45);
-    doc.text(`DATE: ${new Date().toLocaleDateString()}`, 20, 52);
-    
-    // Add specification content
-    const lines = globalSpecification.split('\n');
-    let y = 65;
-    
-    doc.setFontSize(10);
-    lines.forEach(line => {
-        if (y > 270) {
-            doc.addPage();
-            y = 20;
-        }
-        
-        if (line.includes('='.repeat(60))) {
-            doc.line(20, y, 190, y);
-            y += 5;
-        } else if (line.match(/^[A-Z\s]+$/)) {
-            doc.setFont(undefined, 'bold');
-            doc.text(line, 20, y);
-            doc.setFont(undefined, 'normal');
-            y += 7;
-        } else {
-            doc.text(line, 20, y);
-            y += 5;
-        }
-    });
-    
-    // Add cost estimate if available
-    if (globalCostEstimate) {
-        if (y > 240) {
-            doc.addPage();
-            y = 20;
-        }
-        
-        y += 10;
-        doc.setFont(undefined, 'bold');
-        doc.text('COST ESTIMATE', 20, y);
-        y += 10;
-        
-        doc.setFont(undefined, 'normal');
-        doc.text(`Materials: $${globalCostEstimate.materials.toFixed(2)}`, 20, y);
-        y += 7;
-        doc.text(`Labor: $${globalCostEstimate.labor.toFixed(2)}`, 20, y);
-        y += 7;
-        doc.text(`Total: $${globalCostEstimate.total.toFixed(2)}`, 20, y);
-    }
-    
-    // Save PDF
-    const filename = `HALKETT_${projectConfig.projectName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-    doc.save(filename);
-    
-    showNotification('PDF downloaded successfully!', 'success');
-}
-
-// Step navigation
-function updateProgress() {
-    const progress = (projectConfig.currentStep - 1) / 5 * 100;
-    document.getElementById('progressBar').style.width = progress + '%';
-    autoSaveProgress();
-}
-
-function goToStep(stepNum) {
-    if (stepNum < projectConfig.currentStep) {
-        // Allow going back
-        document.getElementById('step' + projectConfig.currentStep).classList.remove('active');
-        projectConfig.currentStep = stepNum;
-        document.getElementById('step' + stepNum).classList.add('active');
-        updateProgress();
-        createStepIndicators();
-    } else if (stepNum === projectConfig.currentStep + 1) {
-        // Allow going forward if next step
-        nextStep(projectConfig.currentStep);
-    }
-}
-
-function nextStep(current) {
-    if (validateStep(current)) {
-        document.getElementById('step' + current).classList.remove('active');
-        projectConfig.currentStep = current + 1;
-        document.getElementById('step' + projectConfig.currentStep).classList.add('active');
-        updateProgress();
-        createStepIndicators();
-        
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        
-        if (current === 5) {
-            calculateAll();
-        }
-    }
-}
-
-function previousStep(current) {
-    document.getElementById('step' + current).classList.remove('active');
-    projectConfig.currentStep = current - 1;
-    document.getElementById('step' + projectConfig.currentStep).classList.add('active');
-    updateProgress();
-    createStepIndicators();
-    
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function goToSystemOverview() {
-    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-    document.getElementById('step1').classList.add('active');
-    projectConfig.currentStep = 1;
-    updateProgress();
-    createStepIndicators();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// Make navigation functions globally available - IMPORTANT!
-window.nextStep = nextStep;
-window.previousStep = previousStep;
-window.goToStep = goToStep;
-window.goToSystemOverview = goToSystemOverview;
-window.toggleUnits = toggleUnits;
-window.showRecentConfigurations = showRecentConfigurations;
-window.generateWalls = generateWalls;
-window.openGallery = openGallery;
-window.closeGallery = closeGallery;
-window.closeGalleryOutside = closeGalleryOutside;
-window.showSampleRequest = showSampleRequest;
-window.closeSampleModal = closeSampleModal;
-window.submitSampleRequest = submitSampleRequest;
-window.closeRecentModal = closeRecentModal;
-window.loadRecentConfig = loadRecentConfig;
-window.saveConfiguration = saveConfiguration;
-window.copySpecification = copySpecification;
-window.generatePDF = generatePDF;
-window.emailSpecification = emailSpecification;
-window.exportCostEstimate = exportCostEstimate;
-window.toggleCostBreakdown = toggleCostBreakdown;
-window.restoreConfiguration = restoreConfiguration;
-window.calculateAll = calculateAll;
+// Export functions to window - EXACT VERCEL PATTERN
 window.validateStep = validateStep;
-window.updateTrimOptions = updateTrimOptions;
-window.toggleTrimMaterial = toggleTrimMaterial;
-
-// Event listeners
-document.addEventListener('DOMContentLoaded', () => {
-    // Create step indicators
-    createStepIndicators();
-    
-    // Load saved progress
-    loadSavedProgress();
-    
-    // Coverage type change
-    document.querySelectorAll('input[name="coverage"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            const wainscotDiv = document.getElementById('wainscotHeight');
-            if (e.target.value === 'partial') {
-                wainscotDiv.style.display = 'block';
-                projectConfig.coverageType = 'partial';
-            } else {
-                wainscotDiv.style.display = 'none';
-                projectConfig.coverageType = 'full';
-            }
-            // Update trim options based on coverage type
-            if (typeof updateTrimOptions === 'function') {
-                updateTrimOptions();
-            }
-        });
-    });
-    
-    // Material change
-    document.querySelectorAll('input[name="material"]').forEach(radio => {
-        radio.addEventListener('change', updateMaterialDetails);
-    });
-    
-    // Ceiling trim change - FIXED VERSION
-    const ceilingTrim = document.getElementById('ceilingTrim');
-    if (ceilingTrim) {
-        ceilingTrim.addEventListener('change', (e) => {
-            const warning = document.getElementById('ceilingTrimWarning');
-            if (warning) {
-                if (!e.target.checked) {
-                    warning.style.display = 'block';
-                } else {
-                    warning.style.display = 'none';
-                }
-            }
-            updateBoardRecommendation();
-        });
-    }
-
-    // Base trim changes - handle both full height and wainscot versions
-    const baseTrimFull = document.getElementById('baseTrimFull');
-    if (baseTrimFull) {
-        baseTrimFull.addEventListener('change', () => {
-            updateBoardRecommendation();
-        });
-    }
-
-    const baseTrimWainscot = document.getElementById('baseTrimWainscot');
-    if (baseTrimWainscot) {
-        baseTrimWainscot.addEventListener('change', () => {
-            updateBoardRecommendation();
-        });
-    }
-    
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        if (e.ctrlKey || e.metaKey) {
-            switch(e.key) {
-                case 's':
-                    e.preventDefault();
-                    if (projectConfig.currentStep === 6) {
-                        saveConfiguration();
-                    }
-                    break;
-                case 'p':
-                    e.preventDefault();
-                    if (projectConfig.currentStep === 6) {
-                        window.print();
-                    }
-                    break;
-                case 'Enter':
-                    e.preventDefault();
-                    if (projectConfig.currentStep < 6) {
-                        nextStep(projectConfig.currentStep);
-                    }
-                    break;
-                case 'r':
-                    e.preventDefault();
-                    if (recentConfigurations.length > 0) {
-                        showRecentConfigurations();
-                    }
-                    break;
-            }
-        }
-    });
-    
-    // Update initial board recommendation
-    if (typeof updateBoardRecommendation === 'function') {
-        updateBoardRecommendation();
-    }
-});
-// Add to Cart function for House of HALKETT integration
-function addToCart() {
-  console.log('Add to Cart clicked!');
-  
-  // Make sure projectConfig exists
-  if (typeof projectConfig === 'undefined') {
-    alert('Please complete the configuration first');
-    return;
-  }
-  
-  // Get the current configuration
-  const config = {
-    projectName: projectConfig.projectName || 'Wall Configuration',
-    wallHeight: projectConfig.wallHeight || 96,
-    coverageType: projectConfig.coverageType || 'full',
-    coverageHeight: projectConfig.coverageHeight || 0,
-    profile: projectConfig.profile || 'contemporary',
-    boardMaterial: projectConfig.boardMaterial || 'natural-wood',
-    boardLength: projectConfig.boardLength || '48',
-    wallCount: projectConfig.wallCount || 1,
-    walls: projectConfig.walls || [],
-estimatedCost: projectConfig.estimatedCost || 5000,
-    timestamp: new Date().toISOString()
-  };
-  
-  console.log('Saving config:', config);
-  
-  // Save to localStorage
-  localStorage.setItem('pendingCalculatorOrder', JSON.stringify(config));
-  
-  // Show notification
-  if (typeof showNotification === 'function') {
-    showNotification('Added to cart! Redirecting...', 'success');
-  } else {
-    alert('Added to cart!');
-  }
-  
-  // Redirect to cart after 1.5 seconds
-  setTimeout(() => {
-    // Always redirect to the House of HALKETT cart
-    if (window.self !== window.top) {
-      // If in iframe, redirect parent window
-      window.parent.location.href = 'https://www.houseofhalkett.com/cart';
-    } else {
-      // If standalone, redirect directly
-      window.location.href = 'https://www.houseofhalkett.com/cart';
-    }
-  }, 1500);
-}  // <-- THIS WAS MISSING! Closes the addToCart function
-
-// Make function globally available
-window.addToCart = addToCart;
+window.calculateAll = calculateAll;
+window.generateSpecification = generateSpecification;
+window.formatDimension = formatDimension;
+window.getMaterialDescription = getMaterialDescription;
+window.getTrimMaterialDescription = getTrimMaterialDescription;

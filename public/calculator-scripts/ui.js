@@ -1,10 +1,10 @@
 // HALKETT Calculator - UI Functions v60
+// FIXED VERSION: Working Vercel UI logic with reorganized features support
 
-// Check for global variables and use them if available
+// Check for global variables and use them if available - EXACT VERCEL PATTERN
 if (typeof projectConfig === 'undefined') {
     var projectConfig = {};
 }
-// ... other global checks ...
 
 // Debounce function
 function debounce(func, wait) {
@@ -59,10 +59,12 @@ function showNotification(message, type = 'success') {
 // Loading overlay control
 function showLoadingOverlay(show) {
     const overlay = document.getElementById('loadingOverlay');
-    if (show) {
-        overlay.classList.add('active');
-    } else {
-        overlay.classList.remove('active');
+    if (overlay) {
+        if (show) {
+            overlay.classList.add('active');
+        } else {
+            overlay.classList.remove('active');
+        }
     }
 }
 
@@ -77,13 +79,14 @@ function highlightError(fieldId) {
     }
 }
 
-// Step indicators
+// Step indicators - UPDATED FOR REORGANIZED 6-STEP TO 5-STEP FLOW
 function createStepIndicators() {
     const indicators = document.getElementById('stepIndicators');
     if (!indicators) return;
     
+    // Updated for reorganized flow: 6 steps total but steps renumbered for user experience
     const steps = [
-        { num: 1, title: 'System', icon: '📋' },
+        { num: 1, title: 'Welcome', icon: '📋' },
         { num: 2, title: 'Configure', icon: '📐' },
         { num: 3, title: 'Design', icon: '🎨' },
         { num: 4, title: 'Materials', icon: '🏗️' },
@@ -120,7 +123,9 @@ function autoSaveProgress() {
 function toggleUnits() {
     projectConfig.useMetric = !projectConfig.useMetric;
     const btn = document.getElementById('unitToggle');
-    btn.textContent = projectConfig.useMetric ? 'Switch to Imperial' : 'Switch to Metric';
+    if (btn) {
+        btn.textContent = projectConfig.useMetric ? 'Switch to Imperial' : 'Switch to Metric';
+    }
     
     // Update all displayed values
     updateAllDisplayedUnits();
@@ -132,14 +137,14 @@ function updateAllDisplayedUnits() {
     const heightInputs = document.querySelectorAll('input[type="number"][id*="Height"], input[id*="length"]');
     heightInputs.forEach(input => {
         if (projectConfig.useMetric) {
-            input.placeholder = input.placeholder.replace('inches', 'mm');
+            input.placeholder = input.placeholder.replace('inches', 'cm');
         } else {
-            input.placeholder = input.placeholder.replace('mm', 'inches');
+            input.placeholder = input.placeholder.replace('cm', 'inches');
         }
     });
 }
 
-// Material details handling - ONLY DECLARE ONCE
+// Material details handling - SAME AS VERCEL BUT ONLY DECLARE ONCE
 let materialDetailsListeners = [];
 
 function updateMaterialDetails() {
@@ -153,7 +158,7 @@ function updateMaterialDetails() {
     materialDetailsListeners.forEach(({ element, event, handler }) => {
         element.removeEventListener(event, handler);
     });
-    materialDetailsListeners = []; // Clear the array, don't redeclare it
+    materialDetailsListeners = []; // Clear the array
     
     let html = '<div class="form-group">';
     switch(material) {
@@ -276,10 +281,12 @@ function updateLeatherColor() {
     }
 }
 
-// Wall generation and live preview
+// Wall generation and live preview - EXACT VERCEL LOGIC
 function generateWalls() {
     const count = parseInt(document.getElementById('wallCount').value) || 0;
     const container = document.getElementById('wallsContainer');
+    
+    if (!container) return;
     
     if (count < 1 || count > 10) {
         container.innerHTML = '<div class="warning">Please enter 1-10 walls</div>';
@@ -288,7 +295,7 @@ function generateWalls() {
     
     let html = '';
     for (let i = 1; i <= count; i++) {
-        const unitLabel = projectConfig.useMetric ? 'mm' : 'inches';
+        const unitLabel = projectConfig.useMetric ? 'cm' : 'inches';
         html += `
             <div class="wall-config" id="wallConfig${i}">
                 <h4>Wall ${i}</h4>
@@ -342,72 +349,88 @@ function generateWalls() {
         const leftSelect = document.getElementById(`left${i}`);
         const rightSelect = document.getElementById(`right${i}`);
         
-        const liveCalc = debounce(() => liveCalculateWall(i), 300);
-        
-        lengthInput.addEventListener('input', liveCalc);
-        leftSelect.addEventListener('change', liveCalc);
-        rightSelect.addEventListener('change', liveCalc);
-        
-        lengthInput.addEventListener('blur', () => {
-            const value = projectConfig.useMetric ? fromMetric(parseFloat(lengthInput.value)) : parseFloat(lengthInput.value);
-            const validation = validateWallLength(value);
-            const errorDiv = document.getElementById(`lengthError${i}`);
+        if (lengthInput && leftSelect && rightSelect) {
+            const liveCalc = debounce(() => liveCalculateWall(i), 300);
             
-            if (!validation.valid) {
-                errorDiv.textContent = validation.error;
-                errorDiv.style.display = 'block';
-                highlightError(`length${i}`);
-            } else {
-                errorDiv.style.display = 'none';
-            }
-        });
+            lengthInput.addEventListener('input', liveCalc);
+            leftSelect.addEventListener('change', liveCalc);
+            rightSelect.addEventListener('change', liveCalc);
+            
+            lengthInput.addEventListener('blur', () => {
+                const value = projectConfig.useMetric ? fromMetric(parseFloat(lengthInput.value)) : parseFloat(lengthInput.value);
+                if (typeof validateWallLength === 'function') {
+                    const validation = validateWallLength(value);
+                    const errorDiv = document.getElementById(`lengthError${i}`);
+                    
+                    if (errorDiv) {
+                        if (!validation.valid) {
+                            errorDiv.textContent = validation.error;
+                            errorDiv.style.display = 'block';
+                            highlightError(`length${i}`);
+                        } else {
+                            errorDiv.style.display = 'none';
+                        }
+                    }
+                }
+            });
+        }
     }
 }
 
-// Live wall calculation preview
+// Live wall calculation preview - EXACT VERCEL LOGIC WITH WORKING FUNCTION CALLS
 function liveCalculateWall(wallNumber) {
     const lengthInput = document.getElementById(`length${wallNumber}`);
+    const left = document.getElementById(`left${wallNumber}`);
+    const right = document.getElementById(`right${wallNumber}`);
+    const resultDiv = document.getElementById(`result${wallNumber}`);
+    
+    if (!lengthInput || !left || !right || !resultDiv) return;
+    
     const length = projectConfig.useMetric ? 
         fromMetric(parseFloat(lengthInput.value)) : 
         parseFloat(lengthInput.value);
     
-    const left = document.getElementById(`left${wallNumber}`).value;
-    const right = document.getElementById(`right${wallNumber}`).value;
-    const resultDiv = document.getElementById(`result${wallNumber}`);
+    const leftValue = left.value;
+    const rightValue = right.value;
     
-    if (length && left && right) {
-        const validation = validateWallLength(length);
-        
-        if (!validation.valid) {
-            resultDiv.innerHTML = `<div class="live-preview error">⚠️ ${validation.error}</div>`;
-            return;
+    if (length && leftValue && rightValue) {
+        // Use working validateWallLength function
+        if (typeof validateWallLength === 'function') {
+            const validation = validateWallLength(length);
+            
+            if (!validation.valid) {
+                resultDiv.innerHTML = `<div class="live-preview error">⚠️ ${validation.error}</div>`;
+                return;
+            }
         }
         
-        // Use memoized calculation
-        const cacheKey = `${length}-${left}-${right}`;
-        const calc = memoizedCalculation(cacheKey, () => calculateWall(length, left, right));
-        
-        if (calc.success) {
-            resultDiv.innerHTML = `
-                <div class="live-preview success">
-                    <svg style="width: 16px; height: 16px; vertical-align: middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    Valid configuration
-                    <small>Visible filler: ${formatDimension(calc.visible)} each side</small>
-                </div>
-            `;
-        } else {
-            resultDiv.innerHTML = `
-                <div class="live-preview warning">
-                    <svg style="width: 16px; height: 16px; vertical-align: middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                    Checking configuration...
-                </div>
-            `;
+        // Use memoized calculation with working calculateWall function
+        if (typeof memoizedCalculation === 'function' && typeof calculateWall === 'function') {
+            const cacheKey = `${length}-${leftValue}-${rightValue}`;
+            const calc = memoizedCalculation(cacheKey, () => calculateWall(length, leftValue, rightValue));
+            
+            if (calc && calc.success) {
+                resultDiv.innerHTML = `
+                    <div class="live-preview success">
+                        <svg style="width: 16px; height: 16px; vertical-align: middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Valid configuration
+                        <small>Visible filler: ${typeof formatDimension === 'function' ? formatDimension(calc.visible) : calc.visible + '"'} each side</small>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="live-preview warning">
+                        <svg style="width: 16px; height: 16px; vertical-align: middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        Checking configuration...
+                    </div>
+                `;
+            }
         }
     } else {
         resultDiv.innerHTML = '';
@@ -492,7 +515,7 @@ Notes: ${requestData.notes}
 
 Configuration attached.`;
     
-    window.location.href = `mailto:samples@halkett.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = `mailto:info@halkettwoodworking.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 // Recent configurations modal
@@ -531,16 +554,14 @@ function closeRecentModal() {
 function loadRecentConfig(id) {
     const recentConfigurations = JSON.parse(localStorage.getItem('recentConfigurations') || '[]');
     const recent = recentConfigurations.find(r => r.id === id);
-    if (recent) {
-        if (typeof restoreConfiguration === 'function') {
-            restoreConfiguration(recent.config);
-            closeRecentModal();
-            showNotification('Configuration loaded from recent projects', 'success');
-        }
+    if (recent && typeof restoreConfiguration === 'function') {
+        restoreConfiguration(recent.config);
+        closeRecentModal();
+        showNotification('Configuration loaded from recent projects', 'success');
     }
 }
 
-// Display cost estimate
+// Display cost estimate - EXACT VERCEL LOGIC
 function displayCostEstimate() {
     if (typeof calculateCosts !== 'function') return;
     
@@ -643,7 +664,7 @@ function toggleCostBreakdown() {
     }
 }
 
-// Display installation time estimate
+// Display installation time estimate - EXACT VERCEL LOGIC
 function displayInstallationTime() {
     if (typeof calculateInstallationTime !== 'function') return;
     
@@ -709,3 +730,11 @@ function updateTrimOptions() {
         }
     }
 }
+
+// Export cost estimate
+function exportCostEstimate() {
+    // Implementation for exporting cost estimate
+    showNotification('Export feature coming soon!', 'info');
+}
+
+// NO WINDOW EXPORTS - EXACT VERCEL PATTERN (relies on global scope)

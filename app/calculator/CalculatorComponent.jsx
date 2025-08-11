@@ -11,83 +11,14 @@ export default function CalculatorComponent() {
   useEffect(() => {
     // Initialize when component mounts
     if (typeof window !== 'undefined') {
-      // Set up global configuration
-      window.CLEARANCE = 0.25;
-      window.CEILING_GAP = 1.5;
-      window.FLOOR_GAP = 1.5;
-      window.P1_SIZES = [6, 4, 2];
-      window.P2_SIZES = [2, 4, 6];
-      window.VERSION = 'v60';
-      
-      window.DEFAULT_PRICING = {
-        boards: {
-          'natural-wood': { base: 150, perInch: 4.5 },
-          'painted': { base: 120, perInch: 3.8 },
-          'leather': { base: 280, perInch: 8.5 },
-          'metal': { base: 200, perInch: 6.2 }
-        },
-        fillers: { end: 85, inside: 120, outside: 105 },
-        hardware: { femaleZClip: 12.50, maleZClip: 1.25, finishingKit: 65 },
-        trim: { ceiling: 42, base: 38, cap: 45 },
-        labor: { perSquareFoot: 12.50, minimum: 500 },
-        markup: 1.35
-      };
-
-      window.loadPricing = function() {
-        try {
-          const stored = localStorage.getItem('halkettPricing');
-          if (stored) return JSON.parse(stored);
-        } catch (e) {
-          console.error('Error loading pricing:', e);
-        }
-        return window.DEFAULT_PRICING;
-      };
-
-      window.PRICING = window.loadPricing();
-      
-      window.reloadPricing = function() {
-        window.PRICING = window.loadPricing();
-      };
-
-      window.projectConfig = {
-        coverageType: 'full',
-        wallHeight: null,
-        boardLength: 96,
-        recommendedBoardLength: null,
-        coverageHeight: null,
-        useCeilingTrim: true,
-        useFloorTrim: false,
-        boardStyle: 'contemporary',
-        boardMaterial: 'natural-wood',
-        materialDetail: '',
-        paintSheen: '',
-        woodStain: '',
-        woodSheen: '',
-        matchMaterials: true,
-        fillerMaterial: '',
-        fillerMaterialDetail: '',
-        trimMaterial: '',
-        trimMaterialDetail: '',
-        needsCap: false,
-        capWidth: '1.75',
-        capEdge: 'square',
-        currentStep: 1,
-        projectName: '',
-        useMetric: false
-      };
-
-      window.globalWallDetails = [];
-      window.globalSpecification = '';
-      window.globalCostEstimate = null;
-      window.calculationCache = new Map();
-      window.recentConfigurations = [];
-
       // Set up all the navigation functions
       window.nextStep = function(current) {
         console.log('nextStep called:', current);
         if (window.validateStep && window.validateStep(current)) {
           document.getElementById('step' + current).classList.remove('active');
-          window.projectConfig.currentStep = current + 1;
+          if (window.projectConfig) {
+            window.projectConfig.currentStep = current + 1;
+          }
           document.getElementById('step' + (current + 1)).classList.add('active');
           setCurrentStep(current + 1);
           
@@ -95,6 +26,19 @@ export default function CalculatorComponent() {
           if (window.createStepIndicators) window.createStepIndicators();
           
           window.scrollTo({ top: 0, behavior: 'smooth' });
+          
+          // Special handling for entering Step 3 - BOARD ALREADY SELECTED IN STEP 2
+          if (current === 2) {
+            console.log('Entering Step 3 - Board already selected in Step 2');
+            
+            // Check if wainscot to show cap rail options
+            if (window.projectConfig && window.projectConfig.coverageType === 'partial') {
+              const capRailDiv = document.getElementById('capRailOptions');
+              if (capRailDiv) {
+                capRailDiv.style.display = 'block';
+              }
+            }
+          }
           
           if (current === 5 && window.calculateAll) {
             window.calculateAll();
@@ -105,7 +49,9 @@ export default function CalculatorComponent() {
       window.previousStep = function(current) {
         console.log('previousStep called:', current);
         document.getElementById('step' + current).classList.remove('active');
-        window.projectConfig.currentStep = current - 1;
+        if (window.projectConfig) {
+          window.projectConfig.currentStep = current - 1;
+        }
         document.getElementById('step' + (current - 1)).classList.add('active');
         setCurrentStep(current - 1);
         
@@ -113,18 +59,32 @@ export default function CalculatorComponent() {
         if (window.createStepIndicators) window.createStepIndicators();
         
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        // Special handling when going back to Step 3
+        if (current - 1 === 3 && window.setRecommendedBoard) {
+          setTimeout(() => {
+            window.setRecommendedBoard();
+          }, 100);
+        }
       };
 
       window.goToStep = function(stepNum) {
         console.log('goToStep called:', stepNum);
-        if (stepNum < window.projectConfig.currentStep) {
+        if (window.projectConfig && stepNum < window.projectConfig.currentStep) {
           document.getElementById('step' + window.projectConfig.currentStep).classList.remove('active');
           window.projectConfig.currentStep = stepNum;
           document.getElementById('step' + stepNum).classList.add('active');
           setCurrentStep(stepNum);
           if (window.updateProgress) window.updateProgress();
           if (window.createStepIndicators) window.createStepIndicators();
-        } else if (stepNum === window.projectConfig.currentStep + 1) {
+          
+          // Special handling when going to Step 3
+          if (stepNum === 3 && window.setRecommendedBoard) {
+            setTimeout(() => {
+              window.setRecommendedBoard();
+            }, 100);
+          }
+        } else if (window.projectConfig && stepNum === window.projectConfig.currentStep + 1) {
           window.nextStep(window.projectConfig.currentStep);
         }
       };
@@ -132,7 +92,9 @@ export default function CalculatorComponent() {
       window.goToSystemOverview = function() {
         document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
         document.getElementById('step1').classList.add('active');
-        window.projectConfig.currentStep = 1;
+        if (window.projectConfig) {
+          window.projectConfig.currentStep = 1;
+        }
         setCurrentStep(1);
         if (window.updateProgress) window.updateProgress();
         if (window.createStepIndicators) window.createStepIndicators();
@@ -145,14 +107,14 @@ export default function CalculatorComponent() {
         
         const config = {
           timestamp: new Date().toISOString(),
-          projectName: window.projectConfig.projectName || 'Untitled Project',
-          material: window.projectConfig.boardMaterial,
-          materialDetail: window.projectConfig.materialDetail,
-          profile: window.projectConfig.boardStyle,
-          boardWidth: window.projectConfig.boardLength,
-          coverage: window.projectConfig.coverageType,
-          wallHeight: window.projectConfig.wallHeight,
-          coverageHeight: window.projectConfig.coverageHeight,
+          projectName: window.projectConfig?.projectName || 'Untitled Project',
+          material: window.projectConfig?.boardMaterial,
+          materialDetail: window.projectConfig?.materialDetail,
+          profile: window.projectConfig?.boardStyle,
+          boardWidth: window.projectConfig?.boardLength,
+          coverage: window.projectConfig?.coverageType,
+          wallHeight: window.projectConfig?.wallHeight,
+          coverageHeight: window.projectConfig?.coverageHeight,
           specification: window.globalSpecification || 'Configuration saved',
           costEstimate: window.globalCostEstimate,
           walls: window.globalWallDetails
@@ -171,6 +133,314 @@ export default function CalculatorComponent() {
         setTimeout(() => {
           window.location.href = '/cart';
         }, 1500);
+      };
+
+      // Coverage change handler with board recommendation logic
+      window.handleCoverageChangeWithBoard = function(element) {
+        const coverageType = element.value;
+        const wallHeight = parseFloat(document.getElementById('wallHeight')?.value) || 0;
+        const wainscotDiv = document.getElementById('wainscotHeight');
+        const gapsSection = document.getElementById('installationGapsSection');
+        const boardSelectionDiv = document.getElementById('boardSelectionSection');
+        
+        console.log('Coverage changed to:', coverageType);
+        
+        // Save wall height and coverage type to project config FIRST
+        if (window.projectConfig) {
+          window.projectConfig.wallHeight = wallHeight;
+          window.projectConfig.coverageType = coverageType;
+          delete window.projectConfig.boardLength; // Clear previous board selection
+          console.log('Coverage change - saved config:', {
+            wallHeight: window.projectConfig.wallHeight,
+            coverageType: window.projectConfig.coverageType
+          });
+        }
+        
+        if (coverageType === 'partial') {
+          // Wainscot selected
+          if (wainscotDiv) wainscotDiv.style.display = 'block';
+          if (gapsSection) gapsSection.style.display = 'none';
+          if (boardSelectionDiv) boardSelectionDiv.style.display = 'none'; // Hide until wainscot height entered
+          
+          // Hide trim selections until wainscot height is configured
+          const trimSelectionsDiv = document.getElementById('trimSelectionsSection');
+          if (trimSelectionsDiv) trimSelectionsDiv.style.display = 'none';
+          
+          // Hide coverage preview for wainscot
+          const coveragePreview = document.getElementById('coveragePreview');
+          if (coveragePreview) coveragePreview.style.display = 'none';
+          
+        } else {
+          // Full height selected
+          if (wainscotDiv) wainscotDiv.style.display = 'none';
+          if (gapsSection) gapsSection.style.display = 'block';
+          if (boardSelectionDiv) boardSelectionDiv.style.display = 'none'; // Hide until gaps configured
+          
+          // Hide trim selections until gaps are configured
+          const trimSelectionsDiv = document.getElementById('trimSelectionsSection');
+          if (trimSelectionsDiv) trimSelectionsDiv.style.display = 'none';
+          
+          // Update gap display and check if we should show board selection
+          if (window.updateGapValidation) {
+            window.updateGapValidation();
+          }
+          
+          // If wall height and gaps already exist, show board selection immediately
+          if (wallHeight > 0) {
+            const ceilingGap = parseFloat(document.getElementById('ceilingGap')?.value) || 1.5;
+            const floorGap = parseFloat(document.getElementById('floorGap')?.value) || 0;
+            
+            if (ceilingGap || floorGap) {
+              console.log('Switching to full height - showing board selection immediately');
+              if (boardSelectionDiv) {
+                boardSelectionDiv.style.display = 'block';
+              }
+              if (window.updateBoardRecommendationForFullHeight) {
+                window.updateBoardRecommendationForFullHeight();
+              }
+              // Show trim selections for full height
+              if (trimSelectionsDiv) {
+                trimSelectionsDiv.style.display = 'block';
+                const fullHeightTrimOptions = document.getElementById('fullHeightTrimOptions');
+                const wainscotTrimOptions = document.getElementById('wainscotTrimOptions');
+                if (fullHeightTrimOptions) fullHeightTrimOptions.style.display = 'block';
+                if (wainscotTrimOptions) wainscotTrimOptions.style.display = 'none';
+              }
+            }
+          }
+        }
+        
+        // Call original handler if it exists
+        if (window.handleCoverageChange) {
+          window.handleCoverageChange(element);
+        }
+      };
+
+      // Wainscot height change handler
+      window.handleWainscotHeightChange = function(element) {
+        const wainscotValue = parseFloat(element.value) || 0;
+        const wallHeight = parseFloat(document.getElementById('wallHeight')?.value) || 0;
+        const boardSelectionDiv = document.getElementById('boardSelectionSection');
+        
+        // Save wall height to project config if not already saved
+        if (window.projectConfig && wallHeight > 0) {
+          window.projectConfig.wallHeight = wallHeight;
+        }
+        
+        // Prevent wainscot from being >= wall height
+        if (wainscotValue >= wallHeight && wallHeight > 0) {
+          element.value = wallHeight - 1;
+          
+          // Show error message
+          const errorDiv = document.getElementById('wainscotError');
+          if (errorDiv) {
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = `Wainscot height must be less than wall height (${wallHeight}")`;
+            
+            // Hide error after 3 seconds
+            setTimeout(() => {
+              errorDiv.style.display = 'none';
+            }, 3000);
+          }
+        }
+        
+        // Update project config
+        if (window.projectConfig) {
+          window.projectConfig.coverageHeight = parseFloat(element.value) || 0;
+          window.projectConfig.coverageType = 'partial';
+          console.log('Wainscot height change - saved config:', {
+            wallHeight: window.projectConfig.wallHeight,
+            coverageHeight: window.projectConfig.coverageHeight,
+            coverageType: window.projectConfig.coverageType
+          });
+        }
+        
+        // Show board selection once wainscot height is entered
+        if (element.value && parseFloat(element.value) > 0 && boardSelectionDiv) {
+          boardSelectionDiv.style.display = 'block';
+          if (window.updateBoardRecommendationForWainscot) {
+            window.updateBoardRecommendationForWainscot();
+          }
+          // Show trim selections after board selection for wainscot
+          const trimSelectionsDiv = document.getElementById('trimSelectionsSection');
+          if (trimSelectionsDiv) {
+            trimSelectionsDiv.style.display = 'block';
+            // Show wainscot trim options
+            const fullHeightTrimOptions = document.getElementById('fullHeightTrimOptions');
+            const wainscotTrimOptions = document.getElementById('wainscotTrimOptions');
+            if (fullHeightTrimOptions) fullHeightTrimOptions.style.display = 'none';
+            if (wainscotTrimOptions) wainscotTrimOptions.style.display = 'block';
+          }
+        }
+      };
+
+      // Gap change handler
+      window.handleGapChange = function() {
+        const wallHeight = parseFloat(document.getElementById('wallHeight')?.value) || 0;
+        const ceilingGap = parseFloat(document.getElementById('ceilingGap')?.value) || 1.5;
+        const floorGap = parseFloat(document.getElementById('floorGap')?.value) || 0;
+        const boardSelectionDiv = document.getElementById('boardSelectionSection');
+        
+        // Save values to project config FIRST
+        if (window.projectConfig) {
+          window.projectConfig.wallHeight = wallHeight;
+          window.projectConfig.customCeilingGap = ceilingGap;
+          window.projectConfig.customFloorGap = floorGap;
+          console.log('Gap change - saved config:', {
+            wallHeight: window.projectConfig.wallHeight,
+            ceilingGap: window.projectConfig.customCeilingGap,
+            floorGap: window.projectConfig.customFloorGap
+          });
+        }
+        
+        // Update gap display
+        if (window.updateGapValidation) {
+          window.updateGapValidation();
+        }
+        
+        // Show board selection once gaps are configured and wall height exists
+        if (wallHeight > 0 && boardSelectionDiv) {
+          boardSelectionDiv.style.display = 'block';
+          if (window.updateBoardRecommendationForFullHeight) {
+            window.updateBoardRecommendationForFullHeight();
+          }
+          // Show trim selections after board selection for full height
+          const trimSelectionsDiv = document.getElementById('trimSelectionsSection');
+          if (trimSelectionsDiv) {
+            trimSelectionsDiv.style.display = 'block';
+            // Show full height trim options
+            const fullHeightTrimOptions = document.getElementById('fullHeightTrimOptions');
+            const wainscotTrimOptions = document.getElementById('wainscotTrimOptions');
+            if (fullHeightTrimOptions) fullHeightTrimOptions.style.display = 'block';
+            if (wainscotTrimOptions) wainscotTrimOptions.style.display = 'none';
+          }
+        }
+      };
+
+      // Board recommendation functions - FIXED TO READ FROM INPUTS DIRECTLY
+      window.updateBoardRecommendationForFullHeight = function() {
+        // Get CURRENT values from inputs, don't rely on projectConfig
+        const wallHeight = parseFloat(document.getElementById('wallHeight')?.value) || 0;
+        const ceilingGap = parseFloat(document.getElementById('ceilingGap')?.value) || 1.5;
+        const floorGap = parseFloat(document.getElementById('floorGap')?.value) || 0;
+        const effectiveCoverage = wallHeight - ceilingGap - floorGap;
+        
+        console.log('Full height recommendation - values:', {
+          wallHeight,
+          ceilingGap,
+          floorGap,
+          effectiveCoverage
+        });
+        
+        const boardSelect = document.getElementById('boardLength');
+        const boardRecommendationDiv = document.getElementById('boardRecommendation');
+        
+        // Clear previous selection
+        if (boardSelect) {
+          boardSelect.value = '';
+        }
+        
+        if (boardSelect && effectiveCoverage > 0) {
+          // Auto-select recommended board
+          if (effectiveCoverage <= 48) {
+            boardSelect.value = '48';
+          } else if (effectiveCoverage <= 96) {
+            boardSelect.value = '96';
+          } else if (effectiveCoverage <= 120) {
+            boardSelect.value = '120';
+          } else if (effectiveCoverage <= 144) {
+            boardSelect.value = '144';
+          }
+          
+          console.log('Auto-selected board:', boardSelect.value);
+        }
+        
+        // Update recommendation display
+        if (boardRecommendationDiv) {
+          let recommendedSize = '';
+          if (effectiveCoverage <= 48) {
+            recommendedSize = '4ft (48")';
+          } else if (effectiveCoverage <= 96) {
+            recommendedSize = '8ft (96")';
+          } else if (effectiveCoverage <= 120) {
+            recommendedSize = '10ft (120")';
+          } else if (effectiveCoverage <= 144) {
+            recommendedSize = '12ft (144")';
+          } else {
+            boardRecommendationDiv.innerHTML = `
+              <div class="alert warning" style="padding: 10px; background: #FFF3CD; border: 1px solid #FFEEBA; color: #856404; margin-top: 10px;">
+                <strong>Note:</strong> Coverage needed (${effectiveCoverage.toFixed(1)}") exceeds maximum board length. 
+                Consider reducing clearances or using wainscot coverage.
+              </div>
+            `;
+            return;
+          }
+          
+          boardRecommendationDiv.innerHTML = `
+            <div style="padding: 10px; background: #E8F5E9; border: 1px solid #4CAF50; color: #2E7D32; margin-top: 10px;">
+              <strong>Recommended Board Size:</strong> ${recommendedSize} or larger
+              <br><small>For ${effectiveCoverage.toFixed(1)}" coverage (${wallHeight}" wall - ${(ceilingGap + floorGap).toFixed(1)}" clearances)</small>
+            </div>
+          `;
+        }
+      };
+
+      window.updateBoardRecommendationForWainscot = function() {
+        // Get CURRENT values from inputs, don't rely on projectConfig
+        const wainscotHeight = parseFloat(document.getElementById('coverageHeight')?.value) || 0;
+        
+        console.log('Wainscot recommendation - wainscot height:', wainscotHeight);
+        
+        const boardSelect = document.getElementById('boardLength');
+        const boardRecommendationDiv = document.getElementById('boardRecommendation');
+        
+        // Clear previous selection
+        if (boardSelect) {
+          boardSelect.value = '';
+        }
+        
+        if (boardSelect && wainscotHeight > 0) {
+          // Auto-select recommended board for wainscot
+          if (wainscotHeight <= 48) {
+            boardSelect.value = '48';
+          } else if (wainscotHeight <= 96) {
+            boardSelect.value = '96';
+          } else if (wainscotHeight <= 120) {
+            boardSelect.value = '120';
+          } else if (wainscotHeight <= 144) {
+            boardSelect.value = '144';
+          }
+          
+          console.log('Auto-selected board for wainscot:', boardSelect.value);
+        }
+        
+        // Update recommendation display
+        if (boardRecommendationDiv) {
+          let recommendedSize = '';
+          if (wainscotHeight <= 48) {
+            recommendedSize = '4ft (48")';
+          } else if (wainscotHeight <= 96) {
+            recommendedSize = '8ft (96")';
+          } else if (wainscotHeight <= 120) {
+            recommendedSize = '10ft (120")';
+          } else if (wainscotHeight <= 144) {
+            recommendedSize = '12ft (144")';
+          } else {
+            boardRecommendationDiv.innerHTML = `
+              <div class="alert warning" style="padding: 10px; background: #FFF3CD; border: 1px solid #FFEEBA; color: #856404; margin-top: 10px;">
+                <strong>Note:</strong> Wainscot height (${wainscotHeight}") exceeds maximum board length.
+              </div>
+            `;
+            return;
+          }
+          
+          boardRecommendationDiv.innerHTML = `
+            <div style="padding: 10px; background: #E8F5E9; border: 1px solid #4CAF50; color: #2E7D32; margin-top: 10px;">
+              <strong>Recommended Board Size:</strong> ${recommendedSize} or larger
+              <br><small>For ${wainscotHeight}" wainscot height</small>
+            </div>
+          `;
+        }
       };
 
       // Initialize all other functions as stubs that will be replaced by loaded scripts
@@ -198,6 +468,9 @@ export default function CalculatorComponent() {
       window.calculateAll = window.calculateAll || function() {};
       window.validateStep = window.validateStep || function() { return true; };
       window.updateTrimOptions = window.updateTrimOptions || function() {};
+      window.updateGapValidation = window.updateGapValidation || function() {};
+      window.setRecommendedBoard = window.setRecommendedBoard || function() { console.log('setRecommendedBoard stub called'); };
+      window.validateBoardDisplay = window.validateBoardDisplay || function() {};
 
       setScriptsLoaded(true);
     }
@@ -206,6 +479,12 @@ export default function CalculatorComponent() {
   // Load the actual calculator scripts after initial setup
   useEffect(() => {
     if (scriptsLoaded && typeof window !== 'undefined') {
+      // Check if scripts already loaded
+      if (window.calculatorScriptsLoaded) {
+        console.log('Calculator scripts already loaded, skipping...');
+        return;
+      }
+      
       // Load the actual calculator scripts
       const loadCalculatorScripts = async () => {
         try {
@@ -231,6 +510,9 @@ export default function CalculatorComponent() {
             });
           }
 
+          // Mark scripts as loaded - ADD THIS LINE
+          window.calculatorScriptsLoaded = true;
+
           // Initialize after all scripts are loaded
           setTimeout(() => {
             if (window.createStepIndicators) window.createStepIndicators();
@@ -245,6 +527,73 @@ export default function CalculatorComponent() {
       loadCalculatorScripts();
     }
   }, [scriptsLoaded]);
+
+  // Set up event listeners after component mounts
+  useEffect(() => {
+    if (scriptsLoaded && typeof window !== 'undefined') {
+      // Add event listeners for gap inputs
+      const setupGapListeners = () => {
+        const wallHeightInput = document.getElementById('wallHeight');
+        const ceilingGapInput = document.getElementById('ceilingGap');
+        const floorGapInput = document.getElementById('floorGap');
+        
+        if (wallHeightInput) {
+          wallHeightInput.addEventListener('input', () => {
+            // Save wall height immediately when it changes
+            const wallHeight = parseFloat(wallHeightInput.value) || 0;
+            if (window.projectConfig) {
+              window.projectConfig.wallHeight = wallHeight;
+              console.log('Wall height input changed - saved:', wallHeight);
+            }
+            
+            if (window.updateGapValidation) window.updateGapValidation();
+            if (window.handleGapChange) window.handleGapChange();
+          });
+        }
+        
+        if (ceilingGapInput) {
+          ceilingGapInput.addEventListener('input', () => {
+            if (window.updateGapValidation) window.updateGapValidation();
+            if (window.handleGapChange) window.handleGapChange();
+          });
+        }
+        
+        if (floorGapInput) {
+          floorGapInput.addEventListener('input', () => {
+            if (window.updateGapValidation) window.updateGapValidation();
+            if (window.handleGapChange) window.handleGapChange();
+          });
+        }
+      };
+      
+      // Set up listeners after a delay to ensure DOM is ready
+      setTimeout(setupGapListeners, 500);
+    }
+  }, [scriptsLoaded]);
+
+  // Add event listener for board selection changes
+  useEffect(() => {
+    if (scriptsLoaded && currentStep === 3) {
+      const boardSelect = document.getElementById('boardLength');
+      if (boardSelect && !boardSelect.hasAttribute('data-listener-added')) {
+        boardSelect.setAttribute('data-listener-added', 'true');
+        
+        const handleBoardChange = () => {
+          console.log('Board selection changed to:', boardSelect.value);
+          if (window.validateBoardDisplay) {
+            window.validateBoardDisplay();
+          }
+        };
+        
+        boardSelect.addEventListener('change', handleBoardChange);
+        
+        // Clean up on unmount
+        return () => {
+          boardSelect.removeEventListener('change', handleBoardChange);
+        };
+      }
+    }
+  }, [scriptsLoaded, currentStep]);
 
   if (!scriptsLoaded) {
     return (
@@ -298,12 +647,28 @@ export default function CalculatorComponent() {
             <div className="progress-fill" id="progressBar"></div>
           </div>
           
-          {/* Step 1: System Overview */}
+          {/* Step 1: System Overview - WITH PROJECT NAME MOVED HERE */}
           <div className="step active" id="step1">
             <div className="step-header">
               <div className="step-number">Welcome to HALKETT</div>
               <h2 className="step-title">Signature Wall System</h2>
               <p className="step-description">Everything calculated automatically for you.</p>
+            </div>
+            
+            {/* PROJECT NAME INPUT - MOVED FROM STEP 2 */}
+            <div className="form-group" style={{ maxWidth: '500px', margin: '0 auto 30px auto' }}>
+              <label htmlFor="projectName" style={{ textAlign: 'center', display: 'block', marginBottom: '10px' }}>
+                Project Name / PO Number 
+                <span style={{ color: '#34499E', fontWeight: 700 }}> (Required)</span>
+                <span className="tooltip" data-tooltip="Used for PDF filename and identification" style={{ color: '#A1A2A0', marginLeft: '5px' }}>ⓘ</span>
+              </label>
+              <input 
+                type="text" 
+                id="projectName" 
+                placeholder="e.g., Master Bedroom or PO-12345" 
+                required 
+                style={{ textAlign: 'center' }}
+              />
             </div>
             
             <div style={{ background: '#F8F7F5', padding: '20px', marginBottom: '20px' }}>
@@ -380,21 +745,12 @@ export default function CalculatorComponent() {
             </div>
           </div>
           
-          {/* Step 2: Basic Configuration */}
+          {/* Step 2: Basic Configuration - WITH BOARD SELECTION AFTER GAPS */}
           <div className="step" id="step2">
             <div className="step-header">
               <div className="step-number">Step 1 of 5</div>
               <h2 className="step-title">Wall Configuration</h2>
               <p className="step-description">Let's start with your wall dimensions and coverage type.</p>
-            </div>
-            
-            <div className="form-group">
-              <label htmlFor="projectName">
-                Project Name / PO Number 
-                <span style={{ color: '#34499E', fontWeight: 700 }}> (Required)</span>
-                <span className="tooltip" data-tooltip="Used for PDF filename and identification" style={{ color: '#A1A2A0', marginLeft: '5px' }}>ⓘ</span>
-              </label>
-              <input type="text" id="projectName" placeholder="e.g., Master Bedroom or PO-12345" required />
             </div>
             
             <div className="form-group">
@@ -409,11 +765,24 @@ export default function CalculatorComponent() {
               <label>Coverage Type</label>
               <div className="radio-group">
                 <div className="radio-option">
-                  <input type="radio" name="coverage" id="fullHeight" value="full" defaultChecked onChange={(e) => window.handleCoverageChange && window.handleCoverageChange(e.target)} />
+                  <input 
+                    type="radio" 
+                    name="coverage" 
+                    id="fullHeight" 
+                    value="full" 
+                    defaultChecked 
+                    onChange={(e) => window.handleCoverageChangeWithBoard && window.handleCoverageChangeWithBoard(e.target)} 
+                  />
                   <label htmlFor="fullHeight">Full Height</label>
                 </div>
                 <div className="radio-option">
-                  <input type="radio" name="coverage" id="wainscot" value="partial" onChange={(e) => window.handleCoverageChange && window.handleCoverageChange(e.target)} />
+                  <input 
+                    type="radio" 
+                    name="coverage" 
+                    id="wainscot" 
+                    value="partial" 
+                    onChange={(e) => window.handleCoverageChangeWithBoard && window.handleCoverageChangeWithBoard(e.target)} 
+                  />
                   <label htmlFor="wainscot">Wainscot</label>
                 </div>
               </div>
@@ -421,7 +790,167 @@ export default function CalculatorComponent() {
             
             <div className="form-group" id="wainscotHeight" style={{ display: 'none' }}>
               <label htmlFor="coverageHeight">Wainscot Height</label>
-              <input type="number" id="coverageHeight" min="12" max="200" placeholder="Enter height in inches" inputMode="numeric" />
+              <input 
+                type="number" 
+                id="coverageHeight" 
+                min="12" 
+                max="200" 
+                placeholder="Enter height in inches" 
+                inputMode="numeric"
+                onChange={(e) => window.handleWainscotHeightChange && window.handleWainscotHeightChange(e.target)}
+              />
+              <div id="wainscotError" style={{ 
+                display: 'none', 
+                color: '#dc3545', 
+                fontSize: '12px', 
+                marginTop: '5px' 
+              }}></div>
+            </div>
+            
+            {/* Installation Gaps Section - FOR FULL HEIGHT ONLY */}
+            <div id="installationGapsSection" style={{ marginTop: '30px' }}>
+              <h4 style={{ fontSize: '14px', margin: '0 0 15px 0', textTransform: 'uppercase', letterSpacing: '1px', color: '#232320' }}>
+                INSTALLATION CLEARANCES
+                <span className="tooltip" data-tooltip="Space between boards and ceiling/floor for Z-clip mounting" style={{ color: '#A1A2A0', marginLeft: '5px', fontSize: '11px' }}>ⓘ</span>
+              </h4>
+              
+              <div style={{ background: '#F5F5F5', padding: '15px', marginBottom: '20px', fontSize: '13px', lineHeight: '1.6' }}>
+                <strong>What are clearances?</strong><br/>
+                Clearances are the spaces left between your boards and the ceiling/floor during installation:
+                <ul style={{ margin: '10px 0 0 20px', paddingLeft: '0' }}>
+                  <li><strong>Ceiling clearance:</strong> Space between the top of boards and your ceiling</li>
+                  <li><strong>Floor clearance:</strong> Space between the bottom of boards and your floor</li>
+                </ul>
+                <em style={{ color: '#666', fontSize: '12px' }}>These spaces are necessary for the Z-clip mounting system and reduce the coverage area of your boards.</em>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                {/* Ceiling Gap */}
+                <div>
+                  <label htmlFor="ceilingGap" style={{ fontSize: '13px', display: 'block', marginBottom: '5px' }}>
+                    Ceiling Clearance
+                    <span style={{ fontSize: '11px', color: '#A1A2A0' }}> (We recommend 1.5")</span>
+                  </label>
+                  <input 
+                    type="number" 
+                    id="ceilingGap" 
+                    min="1" 
+                    max="6" 
+                    step="0.125" 
+                    defaultValue="1.5"
+                    style={{ width: '100%', padding: '8px 12px', border: '2px solid #D1C6B4', fontSize: '14px' }}
+                  />
+                </div>
+                
+                {/* Floor Gap */}
+                <div>
+                  <label htmlFor="floorGap" style={{ fontSize: '13px', display: 'block', marginBottom: '5px' }}>
+                    Floor Clearance
+                    <span style={{ fontSize: '11px', color: '#A1A2A0' }}> (Typically 0")</span>
+                  </label>
+                  <input 
+                    type="number" 
+                    id="floorGap" 
+                    min="0" 
+                    max="6" 
+                    step="0.125" 
+                    defaultValue="0"
+                    style={{ width: '100%', padding: '8px 12px', border: '2px solid #D1C6B4', fontSize: '14px' }}
+                  />
+                </div>
+              </div>
+              
+              {/* Coverage Preview */}
+              <div id="coveragePreview" style={{ marginTop: '15px', padding: '15px', background: '#F8F7F5', border: '1px solid #D1C6B4', display: 'none' }}>
+                <div style={{ fontSize: '13px', color: '#232320' }}>
+                  <strong>Board Coverage Area:</strong> 
+                  <span id="effectiveCoverage"></span>
+                </div>
+                <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+                  <span id="gapWarning"></span>
+                </div>
+              </div>
+              
+              {/* Non-standard gap warning */}
+              <div id="nonStandardGapWarning" style={{ display: 'none', marginTop: '10px' }}>
+                <div className="warning" style={{ fontSize: '12px', padding: '10px', background: '#FFF3CD', border: '1px solid #FFEEBA', color: '#856404' }}>
+                  <strong>Note:</strong> Clearances larger than standard may require custom installation methods. Please consult with your installer.
+                </div>
+              </div>
+            </div>
+            
+            {/* BOARD SELECTION - SHOWN AFTER GAPS OR WAINSCOT HEIGHT */}
+            <div id="boardSelectionSection" style={{ display: 'none', marginTop: '30px' }}>
+              <div className="form-group">
+                <label htmlFor="boardLength">
+                  Modular Board System
+                  <span className="tooltip" data-tooltip="Board length will be cut to fit your wall height" style={{ color: '#A1A2A0', marginLeft: '5px' }}>ⓘ</span>
+                </label>
+                <select id="boardLength">
+                  <option value="">Select a board size...</option>
+                  <option value="48">4ft (48") Board</option>
+                  <option value="96">8ft (96") Board</option>
+                  <option value="120">10ft (120") Board</option>
+                  <option value="144">12ft (144") Board</option>
+                </select>
+              </div>
+              
+              {/* Board validation message */}
+              <div id="boardRecommendation" style={{ marginTop: '15px' }}></div>
+            </div>
+            
+            {/* TRIM SELECTIONS - MOVED FROM STEP 4 */}
+            <div id="trimSelectionsSection" style={{ display: 'none', marginTop: '30px' }}>
+              <div className="form-group">
+                <h4 style={{ fontSize: '14px', margin: '0 0 15px 0', textTransform: 'uppercase', letterSpacing: '1px', color: '#232320' }}>
+                  TRIM SELECTIONS
+                </h4>
+                
+                <div id="fullHeightTrimOptions" style={{ display: 'block' }}>
+                  <div style={{ marginBottom: '15px' }}>
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
+                      <input type="checkbox" id="ceilingTrim" style={{ margin: '3px 0 0 0' }} />
+                      <div>
+                        <span style={{ fontWeight: 500 }}>Ceiling Trim</span>
+                        <div style={{ fontSize: '11px', color: '#A1A2A0', lineHeight: 1.4, marginTop: '2px' }}>
+                          Recommended for covering the gap between modular boards and ceiling, providing a finished architectural edge
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                  
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
+                      <input type="checkbox" id="baseTrimFull" style={{ margin: '3px 0 0 0' }} />
+                      <div>
+                        <span style={{ fontWeight: 500 }}>Base Trim</span>
+                        <div style={{ fontSize: '11px', color: '#A1A2A0', lineHeight: 1.4, marginTop: '2px' }}>
+                          Optional trim for covering the space between modular boards and floor, creating a seamless transition
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+                
+                {/* Wainscot Trim Options */}
+                <div id="wainscotTrimOptions" style={{ display: 'none' }}>
+                  <div style={{ marginBottom: '15px', padding: '10px', background: '#E8F5E9', border: '1px solid #4CAF50' }}>
+                    <span style={{ color: '#2E7D32', fontWeight: 600 }}>✓ Cap Rail:</span> 
+                    <span style={{ fontSize: '12px' }}>You selected a cap rail profile in Design Selection</span>
+                  </div>
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
+                      <input type="checkbox" id="baseTrimPartial" style={{ margin: '3px 0 0 0' }} />
+                      <div>
+                        <span style={{ fontWeight: 500 }}>Base Trim</span>
+                        <div style={{ fontSize: '11px', color: '#A1A2A0', lineHeight: 1.4, marginTop: '2px' }}>
+                          Optional trim for covering the space between modular boards and floor, creating a seamless transition
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
             </div>
             
             <div className="navigation">
@@ -430,25 +959,12 @@ export default function CalculatorComponent() {
             </div>
           </div>
           
-          {/* Step 3: Design Selection */}
+          {/* Step 3: Design Selection - BOARD SELECTION REMOVED */}
           <div className="step" id="step3">
             <div className="step-header">
               <div className="step-number">Step 2 of 5</div>
               <h2 className="step-title">Design Selection</h2>
-              <p className="step-description">Choose your profile style and board system size.</p>
-            </div>
-            
-            <div className="form-group">
-              <label htmlFor="boardLength">
-                Modular Board System
-                <span className="tooltip" data-tooltip="Board length will be cut to fit your wall height" style={{ color: '#A1A2A0', marginLeft: '5px' }}>ⓘ</span>
-              </label>
-              <select id="boardLength">
-                <option value="48">48" Standard Size</option>
-                <option value="96">96" Standard Size</option>
-                <option value="120">120" Premium Size</option>
-                <option value="144">144" Premium Size</option>
-              </select>
+              <p className="step-description">Choose your profile style.</p>
             </div>
             
             <div className="form-group">
@@ -569,10 +1085,54 @@ export default function CalculatorComponent() {
                 <h3 style={{ fontSize: '14px', margin: 0, textTransform: 'uppercase', letterSpacing: '1px', color: '#232320' }}>
                   ALL TRIM COMPONENTS
                 </h3>
-                <button type="button" id="customizeTrim" onClick={() => window.toggleTrimMaterial && window.toggleTrimMaterial()} 
-                        style={{ background: 'none', border: '1px solid #A1A2A0', color: '#A1A2A0', 
-                                 padding: '6px 16px', fontSize: '10px', letterSpacing: '1px',
-                                 cursor: 'pointer', transition: 'all 0.2s ease', minWidth: 'auto' }}>
+                <button 
+                  type="button" 
+                  id="customizeTrim" 
+                  onClick={() => {
+                    const btn = document.getElementById('customizeTrim');
+                    const defaultInfo = document.getElementById('defaultTrimInfo');
+                    const customOptions = document.getElementById('customTrimOptions');
+                    
+                    if (customOptions && customOptions.style.display === 'none') {
+                      // Show custom options
+                      if (defaultInfo) defaultInfo.style.display = 'none';
+                      customOptions.style.display = 'block';
+                      btn.textContent = 'MATCH BOARDS';
+                      btn.style.background = '#34499E';
+                      btn.style.color = '#fff';
+                      btn.style.borderColor = '#34499E';
+                      if (window.projectConfig) {
+                        window.projectConfig.matchMaterials = false;
+                      }
+                    } else {
+                      // Hide custom options
+                      if (defaultInfo) defaultInfo.style.display = 'block';
+                      if (customOptions) customOptions.style.display = 'none';
+                      btn.textContent = 'CUSTOMIZE';
+                      btn.style.background = 'none';
+                      btn.style.color = '#A1A2A0';
+                      btn.style.borderColor = '#A1A2A0';
+                      // Clear selection
+                      const trimSelect = document.getElementById('allTrimMaterial');
+                      if (trimSelect) trimSelect.value = '';
+                      if (window.projectConfig) {
+                        window.projectConfig.matchMaterials = true;
+                        window.projectConfig.trimMaterial = '';
+                      }
+                    }
+                  }}
+                  style={{ 
+                    background: 'none', 
+                    border: '1px solid #A1A2A0', 
+                    color: '#A1A2A0', 
+                    padding: '6px 16px', 
+                    fontSize: '10px', 
+                    letterSpacing: '1px',
+                    cursor: 'pointer', 
+                    transition: 'all 0.2s ease', 
+                    minWidth: 'auto' 
+                  }}
+                >
                   CUSTOMIZE
                 </button>
               </div>
@@ -584,7 +1144,16 @@ export default function CalculatorComponent() {
               <div id="customTrimOptions" style={{ display: 'none' }}>
                 <div className="form-group" style={{ marginBottom: '10px' }}>
                   <label htmlFor="allTrimMaterial" style={{ fontSize: '11px' }}>Select Trim Material</label>
-                  <select id="allTrimMaterial" style={{ fontSize: '14px' }}>
+                  <select 
+                    id="allTrimMaterial" 
+                    style={{ fontSize: '14px' }}
+                    onChange={(e) => {
+                      if (window.projectConfig) {
+                        window.projectConfig.trimMaterial = e.target.value;
+                        window.projectConfig.fillerMaterial = e.target.value;
+                      }
+                    }}
+                  >
                     <option value="">Match Board Material</option>
                     <optgroup label="Wood">
                       <option value="white-oak">White Oak</option>
@@ -615,49 +1184,15 @@ export default function CalculatorComponent() {
             
             <div className="form-group" style={{ marginTop: '20px' }}>
               <h4 style={{ fontSize: '14px', margin: '0 0 15px 0', textTransform: 'uppercase', letterSpacing: '1px', color: '#232320' }}>
-                TRIM SELECTIONS
+                ADDITIONAL OPTIONS
               </h4>
               
-              <div id="fullHeightTrimOptions" style={{ display: 'block' }}>
-                <div style={{ marginBottom: '10px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                    <input type="checkbox" id="ceilingTrim" defaultChecked style={{ margin: 0 }} />
-                    <span>Ceiling Trim</span>
-                    <span style={{ fontSize: '11px', color: '#A1A2A0' }}>(Recommended for finished edge)</span>
-                  </label>
-                </div>
-                
-                <div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                    <input type="checkbox" id="baseTrimFull" style={{ margin: 0 }} />
-                    <span>Base Trim</span>
-                    <span style={{ fontSize: '11px', color: '#A1A2A0' }}>(Optional)</span>
-                  </label>
-                </div>
-              </div>
-              
-              <div id="wainscotTrimOptions" style={{ display: 'none' }}>
-                <div style={{ marginBottom: '10px', padding: '10px', background: '#E8F5E9', border: '1px solid #4CAF50' }}>
-                  <span style={{ color: '#2E7D32', fontWeight: 600 }}>✓ Cap Rail:</span> 
-                  <span style={{ fontSize: '12px' }}>You selected a cap rail profile in Step 3</span>
-                </div>
-                
-                <div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                    <input type="checkbox" id="baseTrimWainscot" style={{ margin: 0 }} />
-                    <span>Base Trim</span>
-                    <span style={{ fontSize: '11px', color: '#A1A2A0' }}>(Optional)</span>
-                  </label>
-                </div>
+              <div style={{ background: '#F8F7F5', padding: '15px', textAlign: 'center', color: '#666', fontSize: '13px' }}>
+                <span style={{ color: '#34499E' }}>ⓘ</span> Trim selections have been moved to the Configuration step for a better workflow
               </div>
             </div>
             
-            <div id="trimGapInfo" style={{ display: 'none', marginTop: '10px' }}>
-              <div className="warning" style={{ fontSize: '12px', padding: '10px' }}>
-                <strong>Note:</strong> <span id="gapMessage"></span>
-              </div>
-            </div>
-            
+            {/* Customization Note */}
             <div className="customization-note">
               <div className="customization-button" onClick={() => window.openGallery && window.openGallery()}>
                 <p className="header">BEYOND THE STANDARD</p>
@@ -670,6 +1205,7 @@ export default function CalculatorComponent() {
               </p>
             </div>
             
+            {/* Sample Request Button */}
             <div style={{ textAlign: 'center', margin: '20px 0' }}>
               <button onClick={() => window.showSampleRequest && window.showSampleRequest()} style={{ background: '#A1A2A0' }}>
                 <svg style={{ width: '16px', height: '16px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -738,7 +1274,7 @@ export default function CalculatorComponent() {
               <button onClick={() => window.copySpecification && window.copySpecification()}>
                 <svg style={{ width: '16px', height: '16px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+                  <path d="M5 15H4a2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
                 </svg>
                 Copy to Clipboard
               </button>
